@@ -101,37 +101,44 @@ Faz 5: Canlıya Alma         (Deploy + Test + Polish)
 
 ---
 
-## Faz 3 — Çekirdek Özellikler 🔄
+## Faz 3 — Çekirdek Özellikler ✅
 
-**Süre:** ~1 hafta  
+**Süre:** 1 gün (2026-06-06)  
 **Amaç:** Görüntü yükleme, analiz ve rapor sayfası
 
 ### Adımlar
 
 #### 3.1 Görüntü Yükleme
-- [ ] Sürükle-bırak yükleme bileşeni (`react-dropzone`)
-- [ ] Görüntü önizleme (yüklemeden önce)
-- [ ] DICOM desteği (`cornerstone.js` entegrasyonu)
-- [ ] Supabase Storage'a yükleme fonksiyonu
-- [ ] Dosya boyutu ve format validasyonu (max 20MB)
+- [x] Sürükle-bırak yükleme bileşeni (`react-dropzone`) — `components/image-dropzone.tsx`
+- [x] Görüntü önizleme (yüklemeden önce)
+- [ ] DICOM desteği — Faz 5'e bırakıldı (karmaşık, cornerstone.js gerekiyor)
+- [x] Supabase Storage'a yükleme fonksiyonu — `lib/supabase/storage.ts`
+- [x] Dosya boyutu ve format validasyonu (max 20MB, JPG/PNG/WebP)
 
 #### 3.2 Analiz Sayfası (`/analyze`)
-- [ ] Yükleme formu (görüntü + klinisyen notu)
-- [ ] "Analiz Et" butonuna basılınca:
+- [x] Yükleme formu (görüntü + klinisyen notu)
+- [x] "Analiz Et" butonuna basılınca:
   1. Görüntüyü Supabase Storage'a yükle
-  2. Modal `/analyze` endpoint'ini çağır
+  2. Modal `/analyze` endpoint'ini `/api/analyze` proxy üzerinden çağır
   3. Yükleme animasyonu göster ("MedGemma analiz ediyor...")
   4. Sonucu veritabanına kaydet
   5. Sonuç sayfasına yönlendir
+- [x] `app/api/analyze/route.ts` — Modal URL sunucu tarafında kalır (güvenli)
 
 #### 3.3 Rapor Sayfası (`/analysis/[id]`)
-- [ ] Sol: Görüntü görüntüleyici
-- [ ] Sağ: Rapor (TR/EN dil toggle)
-- [ ] Bulgular / Yorum / Öneri bölümleri
-- [ ] PDF indirme (`jsPDF`)
-- [ ] Tıbbi sorumluluk reddi uyarısı
+- [x] Sol: Görüntü görüntüleyici (Supabase Storage imzalı URL)
+- [x] Sağ: Rapor (TR/EN dil toggle)
+- [x] Bulgular / Yorum / Öneri bölümleri (metin parsing)
+- [x] PDF indirme (`jsPDF`)
+- [x] Tıbbi sorumluluk reddi uyarısı
 
-**Faz 3 Tamamlanma Kriteri:** Görüntü yüklenip rapor görüntülenebilmeli.
+#### 3.4 Ana Sayfa Güncelleme
+- [x] "Yeni Analiz Başlat" CTA butonu
+- [x] Son 5 analiz listesi
+
+**Faz 3 Tamamlanma Kriteri:** ✅ Görüntü yüklenip rapor görüntülenebilmeli.
+
+> **Not:** Modal URL sunucu tarafında kalması için `app/api/analyze/route.ts` proxy eklendi.
 
 ---
 

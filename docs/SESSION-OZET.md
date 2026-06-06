@@ -1,7 +1,7 @@
 # Oturum Özeti — MedVision AI Projesi
 
 **Son Güncelleme:** 2026-06-06  
-**Durum:** Faz 1 ✅ + Faz 2 ✅ tamamlandı — Faz 3 sıradaki
+**Durum:** Faz 1 ✅ + Faz 2 ✅ + Faz 3 ✅ tamamlandı — Faz 4 sıradaki
 
 ---
 
@@ -112,15 +112,40 @@ medgemma-app/
 
 ---
 
-## 5. Sıradaki: Faz 3 — Çekirdek Özellikler
+## 5. Faz 3 — Tamamlananlar (2026-06-06)
 
-1. `react-dropzone` ile görüntü yükleme bileşeni
-2. Supabase Storage'a yükleme fonksiyonu
-3. `/analyze` sayfası: form → Modal API çağrısı → DB kayıt → rapor sayfasına yönlendir
-4. `/analysis/[id]` rapor sayfası: görüntü + TR/EN toggle + PDF indirme
-5. Tıbbi sorumluluk reddi uyarısı
+### Oluşturulan Dosyalar
+- `components/image-dropzone.tsx` — Sürükle-bırak yükleme bileşeni (react-dropzone)
+- `lib/supabase/storage.ts` — Supabase Storage yükleme + imzalı URL
+- `app/api/analyze/route.ts` — Modal proxy (MODAL_API_URL sunucu tarafında kalır)
+- `app/(dashboard)/analyze/page.tsx` — Analiz sayfası (yükleme formu)
+- `app/(dashboard)/analysis/[id]/page.tsx` — Rapor sayfası (server component)
+- `app/(dashboard)/analysis/[id]/report-view.tsx` — TR/EN toggle + PDF (client component)
+- `app/(dashboard)/page.tsx` — Ana sayfa güncellendi (son analizler + CTA)
 
-**"Faz 3'ü başlat" komutu ile devam edilebilir.**
+### Analiz Akışı
+1. `/analyze` → Dropzone ile görüntü seç + klinisyen notu
+2. "Analiz Et" → Supabase Storage'a yükle → `/api/analyze` proxy → Modal GPU
+3. Sonuç DB'ye kayıt → `/analysis/{id}` rapor sayfasına yönlendir
+4. Rapor sayfası: görüntü + TR/EN toggle + PDF indirme
+
+### Kritik Notlar
+- `MODAL_API_URL` environment değişkeni **NEXT_PUBLIC_ öneki olmadan** kalır (server-side only)
+- PDF oluşturma: jsPDF dinamik import (browser-only, click handler içinde)
+- Görüntü storage path'i DB'de saklanır; rapor sayfasında imzalı URL oluşturulur (1 saat geçerli)
+- `pnpm-workspace.yaml`'a `core-js: true` eklendi (jsPDF bağımlılığı)
+
+### Test Sonucu ✅
+- `pnpm build` başarılı, TypeScript hatasız
+
+## 6. Sıradaki: Faz 4 — Chat + Geçmiş
+
+1. Rapor sayfasının altına chat paneli (`/api/chat` route)
+2. Mesajları DB'ye kaydet (`messages` tablosu)
+3. `/history` sayfası — tüm analizleri listele, arama/filtreleme
+4. Analiz silme
+
+**"Faz 4'ü başlat" komutu ile devam edilebilir.**
 
 ---
 
