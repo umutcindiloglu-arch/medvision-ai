@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Analysis } from '@/types'
+import { Analysis, Message } from '@/types'
+import { ChatPanel } from '@/components/chat-panel'
 
 interface ReportViewProps {
   analysis: Analysis
   imageUrl: string | null
+  initialMessages: Message[]
 }
 
 function parseReportSections(text: string) {
@@ -41,7 +43,7 @@ function parseReportSections(text: string) {
   return sections.length > 0 ? sections : [{ title: 'Rapor', content: text.trim() }]
 }
 
-export function ReportView({ analysis, imageUrl }: ReportViewProps) {
+export function ReportView({ analysis, imageUrl, initialMessages }: ReportViewProps) {
   const [lang, setLang] = useState<'tr' | 'en'>('tr')
 
   const reportText = lang === 'tr' ? analysis.report_tr : analysis.report_en
@@ -230,6 +232,9 @@ export function ReportView({ analysis, imageUrl }: ReportViewProps) {
             <p className="text-sm text-slate-500">Rapor henüz oluşturulmadı.</p>
           </div>
         )}
+
+        {/* Chat Paneli */}
+        <ChatPanel analysisId={analysis.id} initialMessages={initialMessages} />
       </div>
     </div>
   )

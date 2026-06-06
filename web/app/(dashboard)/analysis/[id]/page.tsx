@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Analysis } from '@/types'
+import { Analysis, Message } from '@/types'
 import { ReportView } from './report-view'
 
 interface Props {
@@ -23,12 +23,13 @@ export default async function AnalysisPage({ params }: Props) {
 
   if (error || !analysis) notFound()
 
-  // Depolanan yoldan imzalı URL oluştur (1 saat geçerli)
-  const { data: signedData } = await supabase.storage
-    .from('medical-images')
-    .createSignedUrl(analysis.image_url, 3600)
+  const [signedResult, messagesResult] = await Promise.all([
+    supabase.storage.from('medical-images').createSignedUrl(analysis.image_url, 3600),
+    supabase.from('messages').select('*').eq('analysis_id', id).order('created_at', { ascending: true }),
+  ])
 
-  const imageUrl = signedData?.signedUrl ?? null
+  const imageUrl = signedResult.data?.signedUrl ?? null
+  const messages = (messagesResult.data ?? []) as Message[]
 
   return (
     <div>
@@ -43,7 +44,7 @@ export default async function AnalysisPage({ params }: Props) {
           Ana Sayfa
         </a>
       </div>
-      <ReportView analysis={analysis as Analysis} imageUrl={imageUrl} />
+      <ReportView analysis={analysis as Analysis} imageUrl={imageUrl} initialMessages={messages} />
     </div>
   )
 }
