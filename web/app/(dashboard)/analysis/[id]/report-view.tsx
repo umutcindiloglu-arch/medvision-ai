@@ -54,70 +54,46 @@ export function ReportView({ analysis, imageUrl, initialMessages }: ReportViewPr
   })
 
   async function handleDownloadPdf() {
-    const { jsPDF } = await import('jspdf')
+    const pdfMake = (await import('pdfmake/build/pdfmake')).default
+    const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default
+    // @ts-expect-error pdfmake vfs_fonts runtime assignment
+    pdfMake.vfs = pdfFonts.pdfMake?.vfs ?? pdfFonts.vfs ?? pdfFonts
 
-    // Roboto fontunu yükle — Latin Extended içerir, Türkçe karakterleri destekler
-    const fontRes = await fetch('/fonts/Roboto-Regular.ttf')
-    const fontBuffer = await fontRes.arrayBuffer()
-    const fontBase64 = btoa(
-      new Uint8Array(fontBuffer).reduce((s, b) => s + String.fromCharCode(b), '')
-    )
+    const currentSections = reportText ? parseReportSections(reportText) : []
 
-    const doc = new jsPDF({ unit: 'mm', format: 'a4' })
-    doc.addFileToVFS('Roboto-Regular.ttf', fontBase64)
-    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal')
-    doc.setFont('Roboto')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const content: any[] = [
+      { text: 'MedVision AI — Analiz Raporu', style: 'title' },
+      { text: `Tarih: ${formattedDate}`, style: 'meta' },
+      ...(analysis.image_name ? [{ text: `Görüntü: ${analysis.image_name}`, style: 'meta' }] : []),
+      { canvas: [{ type: 'line', x1: 0, y1: 4, x2: 515, y2: 4, lineWidth: 1, lineColor: '#e2e8f0' }] },
+      { text: '', margin: [0, 8, 0, 0] },
+      ...currentSections.flatMap((s) => [
+        { text: s.title.toUpperCase(), style: 'sectionTitle' },
+        { text: s.content, style: 'sectionBody' },
+        { text: '', margin: [0, 6, 0, 0] },
+      ]),
+      {
+        text: 'Bu rapor yalnızca araştırma ve destek amaçlıdır. Tıbbi teşhis yerine geçmez.',
+        style: 'disclaimer',
+        margin: [0, 16, 0, 0],
+      },
+    ]
 
-    // Başlık
-    doc.setFontSize(18)
-    doc.setTextColor(15, 23, 42)
-    doc.text('MedVision AI — Analiz Raporu', 20, 22)
-
-    // Meta bilgiler
-    doc.setFontSize(10)
-    doc.setTextColor(100, 116, 139)
-    doc.text(`Tarih: ${formattedDate}`, 20, 32)
-    if (analysis.image_name) doc.text(`Görüntü: ${analysis.image_name}`, 20, 38)
-
-    // Uyarı çizgisi
-    doc.setDrawColor(226, 232, 240)
-    doc.line(20, 44, 190, 44)
-
-    let y = 54
-
-    for (const section of sections) {
-      // Bölüm başlığı
-      doc.setFontSize(12)
-      doc.setFont('Roboto', 'normal')
-      doc.setTextColor(29, 78, 216)
-      doc.text(section.title.toUpperCase(), 20, y)
-      y += 7
-
-      // Bölüm içeriği
-      doc.setFontSize(11)
-      doc.setTextColor(30, 41, 59)
-      const lines = doc.splitTextToSize(section.content, 170)
-      doc.text(lines, 20, y)
-      y += lines.length * 6 + 10
-
-      if (y > 270) {
-        doc.addPage()
-        doc.addFileToVFS('Roboto-Regular.ttf', fontBase64)
-        doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal')
-        doc.setFont('Roboto')
-        y = 20
-      }
+    const docDefinition = {
+      content,
+      styles: {
+        title:       { fontSize: 18, bold: true, color: '#0f172a', margin: [0, 0, 0, 6] as [number,number,number,number] },
+        meta:        { fontSize: 10, color: '#64748b', margin: [0, 0, 0, 2] as [number,number,number,number] },
+        sectionTitle:{ fontSize: 11, bold: true, color: '#1d4ed8', margin: [0, 4, 0, 4] as [number,number,number,number] },
+        sectionBody: { fontSize: 11, color: '#1e293b', lineHeight: 1.5 },
+        disclaimer:  { fontSize: 8,  color: '#92400e', italics: true },
+      },
+      defaultStyle: { font: 'Roboto' },
+      pageMargins: [40, 40, 40, 40] as [number, number, number, number],
     }
 
-    // Sorumluluk reddi
-    doc.setFontSize(8)
-    doc.setTextColor(146, 64, 14)
-    doc.text(
-      'Bu rapor yalnızca araştırma ve destek amaçlıdır. Tıbbi teşhis yerine geçmez.',
-      20, Math.min(y + 6, 282)
-    )
-
-    doc.save(`medvision-rapor-${analysis.id.slice(0, 8)}.pdf`)
+    pdfMake.createPdf(docDefinition).download(`medvision-rapor-${analysis.id.slice(0, 8)}.pdf`)
   }
 
   return (
