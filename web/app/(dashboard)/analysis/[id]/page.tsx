@@ -7,6 +7,13 @@ interface Props {
   params: Promise<{ id: string }>
 }
 
+function parseImagePaths(imageUrl: string): string[] {
+  if (imageUrl.startsWith('[')) {
+    try { return JSON.parse(imageUrl) } catch { /* fall through */ }
+  }
+  return [imageUrl]
+}
+
 export default async function AnalysisPage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
@@ -23,12 +30,18 @@ export default async function AnalysisPage({ params }: Props) {
 
   if (error || !analysis) notFound()
 
-  const [signedResult, messagesResult] = await Promise.all([
-    supabase.storage.from('medical-images').createSignedUrl(analysis.image_url, 3600),
+  const imagePaths = parseImagePaths(analysis.image_url)
+
+  const [signedResults, messagesResult] = await Promise.all([
+    Promise.all(
+      imagePaths.map((path) =>
+        supabase.storage.from('medical-images').createSignedUrl(path, 3600)
+      )
+    ),
     supabase.from('messages').select('*').eq('analysis_id', id).order('created_at', { ascending: true }),
   ])
 
-  const imageUrl = signedResult.data?.signedUrl ?? null
+  const imageUrls = signedResults.map((r) => r.data?.signedUrl ?? null)
   const messages = (messagesResult.data ?? []) as Message[]
 
   return (
@@ -44,7 +57,11 @@ export default async function AnalysisPage({ params }: Props) {
           Ana Sayfa
         </a>
       </div>
-      <ReportView analysis={analysis as Analysis} imageUrl={imageUrl} initialMessages={messages} />
+      <ReportView
+        analysis={analysis as Analysis}
+        imageUrls={imageUrls}
+        initialMessages={messages}
+      />
     </div>
   )
 }

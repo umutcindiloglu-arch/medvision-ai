@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return NextResponse.json({ error: 'Oturum bulunamadı.' }, { status: 401 })
 
-  const { analysis_id, message } = await request.json()
+  const { analysis_id, message, attachment_b64 } = await request.json()
 
   // Analizi ve görüntü yolunu al
   const { data: analysis, error: analysisError } = await supabase
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${session.access_token}`,
     },
-    body: JSON.stringify({ image_base64: base64, messages }),
+    body: JSON.stringify({ image_base64: base64, messages, attachment_base64: attachment_b64 ?? '' }),
   })
 
   if (!modalRes.ok) {

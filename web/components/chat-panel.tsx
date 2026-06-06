@@ -9,39 +9,83 @@ interface ChatPanelProps {
   initialMessages: Message[]
 }
 
+const ACCEPTED = 'image/jpeg,image/png,image/webp,application/pdf'
+
+function toBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve((reader.result as string).split(',')[1])
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 export function ChatPanel({ analysisId, initialMessages }: ChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [attachment, setAttachment] = useState<{ file: File; preview: string } | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  function handleAttachmentSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error('Dosya 20MB\'den büyük olamaz.')
+      return
+    }
+    const isImage = file.type.startsWith('image/')
+    setAttachment({
+      file,
+      preview: isImage ? URL.createObjectURL(file) : '',
+    })
+    e.target.value = ''
+  }
+
+  function removeAttachment() {
+    if (attachment?.preview) URL.revokeObjectURL(attachment.preview)
+    setAttachment(null)
+  }
+
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
     const text = input.trim()
-    if (!text || loading) return
+    if ((!text && !attachment) || loading) return
 
+    const messageText = text || (attachment ? `[${attachment.file.name}]` : '')
     setInput('')
     setLoading(true)
 
-    // Kullanıcı mesajını anında göster
     const optimisticUser: Message = {
       id: `temp-${Date.now()}`,
       analysis_id: analysisId,
       role: 'user',
-      content: text,
+      content: messageText,
       created_at: new Date().toISOString(),
     }
+    const currentAttachment = attachment
     setMessages((prev) => [...prev, optimisticUser])
+    setAttachment(null)
 
     try {
+      let attachmentB64: string | undefined
+      if (currentAttachment) {
+        attachmentB64 = await toBase64(currentAttachment.file)
+      }
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analysis_id: analysisId, message: text }),
+        body: JSON.stringify({
+          analysis_id: analysisId,
+          message: messageText,
+          attachment_b64: attachmentB64,
+        }),
       })
 
       if (!res.ok) {
@@ -50,21 +94,19 @@ export function ChatPanel({ analysisId, initialMessages }: ChatPanelProps) {
       }
 
       const { reply } = await res.json()
-      const assistantMsg: Message = {
+      setMessages((prev) => [...prev, {
         id: `temp-${Date.now()}-a`,
         analysis_id: analysisId,
         role: 'assistant',
         content: reply,
         created_at: new Date().toISOString(),
-      }
-      setMessages((prev) => [...prev, assistantMsg])
+      }])
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Hata oluştu.'
-      toast.error(msg)
-      // Hatalı optimistic mesajı kaldır
+      toast.error(err instanceof Error ? err.message : 'Hata oluştu.')
       setMessages((prev) => prev.filter((m) => m.id !== optimisticUser.id))
     } finally {
       setLoading(false)
+      if (currentAttachment?.preview) URL.revokeObjectURL(currentAttachment.preview)
     }
   }
 
@@ -82,15 +124,15 @@ export function ChatPanel({ analysisId, initialMessages }: ChatPanelProps) {
       <div className="space-y-3 max-h-[480px] overflow-y-auto pr-1 mb-4">
         {messages.length === 0 && (
           <div className="text-center py-8 text-slate-400 text-sm">
-            <p>Rapor hakkında soru sorabilirsiniz.</p>
-            <p className="text-xs mt-1 text-slate-300">Örn: "Bu bulgu ne anlama geliyor?" veya "Hangi ek tetkikler önerilir?"</p>
+            <p>Rapor veya görüntü hakkında soru sorabilirsiniz.</p>
+            <p className="text-xs mt-1 text-slate-300">
+              Ek görüntü veya PDF de ekleyebilirsiniz.
+            </p>
           </div>
         )}
+
         {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
+          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {msg.role === 'assistant' && (
               <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mr-2 mt-0.5">
                 <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -99,13 +141,11 @@ export function ChatPanel({ analysisId, initialMessages }: ChatPanelProps) {
                 </svg>
               </div>
             )}
-            <div
-              className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                msg.role === 'user'
-                  ? 'bg-blue-600 text-white rounded-br-sm'
-                  : 'bg-slate-100 text-slate-800 rounded-bl-sm'
-              }`}
-            >
+            <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+              msg.role === 'user'
+                ? 'bg-blue-600 text-white rounded-br-sm'
+                : 'bg-slate-100 text-slate-800 rounded-bl-sm'
+            }`}>
               <p className="whitespace-pre-wrap">{msg.content}</p>
             </div>
           </div>
@@ -131,27 +171,67 @@ export function ChatPanel({ analysisId, initialMessages }: ChatPanelProps) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Mesaj gönderme formu */}
+      {/* Attachment önizleme */}
+      {attachment && (
+        <div className="mb-2 flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl">
+          {attachment.preview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={attachment.preview} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+          )}
+          <p className="text-xs text-slate-600 flex-1 truncate">{attachment.file.name}</p>
+          <button onClick={removeAttachment} className="text-slate-400 hover:text-slate-600 flex-shrink-0">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Giriş alanı */}
       <form onSubmit={handleSend} className="flex gap-2">
+        <input ref={fileInputRef} type="file" accept={ACCEPTED} className="hidden" onChange={handleAttachmentSelect} />
+
+        {/* Ek dosya butonu */}
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={loading}
+          title="Görüntü veya PDF ekle"
+          className="px-2.5 py-2.5 text-slate-400 hover:text-blue-500 border border-slate-200 hover:border-blue-300
+            rounded-xl transition-colors disabled:opacity-50 flex-shrink-0"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+          </svg>
+        </button>
+
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={loading}
-          placeholder="Rapor hakkında soru sorun..."
+          placeholder="Rapor veya görüntü hakkında soru sorun..."
           className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
             disabled:opacity-60 disabled:cursor-not-allowed transition"
         />
+
         <button
           type="submit"
-          disabled={loading || !input.trim()}
+          disabled={loading || (!input.trim() && !attachment)}
           className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200
             text-white disabled:text-slate-400 rounded-xl transition-colors flex-shrink-0"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
           </svg>
         </button>
       </form>
