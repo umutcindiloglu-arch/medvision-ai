@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+// Modal cold-start + model inference uzun sürebilir; Vercel Hobby planı max 60s
+export const maxDuration = 60
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
 

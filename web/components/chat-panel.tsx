@@ -32,6 +32,11 @@ export function ChatPanel({ analysisId, initialMessages }: ChatPanelProps) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Panel açılınca Modal container'ını önceden uyandır (cold-start'ı gizle)
+  useEffect(() => {
+    fetch('/api/warmup').catch(() => {})
+  }, [])
+
   function handleAttachmentSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -220,6 +225,7 @@ export function ChatPanel({ analysisId, initialMessages }: ChatPanelProps) {
           disabled={loading}
           placeholder="Rapor veya görüntü hakkında soru sorun..."
           className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm
+            text-slate-800 placeholder:text-slate-400
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
             disabled:opacity-60 disabled:cursor-not-allowed transition"
         />

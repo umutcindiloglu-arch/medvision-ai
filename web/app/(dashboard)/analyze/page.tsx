@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { MultiImageDropzone } from '@/components/multi-image-dropzone'
@@ -33,6 +33,11 @@ export default function AnalyzePage() {
   const [step, setStep] = useState<Step>('idle')
 
   const isLoading = step !== 'idle'
+
+  // Sayfa açılınca Modal container'ını önceden uyandır (cold-start'ı gizle)
+  useEffect(() => {
+    fetch('/api/warmup').catch(() => {})
+  }, [])
 
   const handleAdd = useCallback((newFiles: File[]) => {
     setFiles((prev) => [...prev, ...newFiles])
