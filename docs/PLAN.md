@@ -14,6 +14,7 @@ Faz 2: AI Backend           (Modal + FastAPI + MedGemma)  ✅ Tamamlandı
 Faz 3: Çekirdek Özellikler  (Yükleme + Analiz + Rapor)   ✅ Tamamlandı
 Faz 4: Chat + Geçmiş        (Sohbet + Analiz Geçmişi)    ✅ Tamamlandı
 Faz 5: Canlıya Alma         (Deploy + Test + Polish)      ✅ Tamamlandı
+Faz 6: Ücretlendirme        (Ücretsiz hak + Abonelik)    📋 Planlandı
 ```
 
 > **🎉 Proje canlıda:** [yapayzekahekim.com](https://yapayzekahekim.com) (Vercel + Hostinger özel alan adı)
@@ -221,6 +222,43 @@ Faz 5: Canlıya Alma         (Deploy + Test + Polish)      ✅ Tamamlandı
 - [x] **Cold-start düzeltmesi:** route'lara `maxDuration=60` + `/api/warmup` ön ısıtma (sayfa açılınca container uyandırılıyor)
 
 **Faz 5 Tamamlanma Kriteri:** ✅ Uygulama canlıda ([yapayzekahekim.com](https://yapayzekahekim.com)), tüm özellikler çalışıyor.
+
+---
+
+## Faz 6 — Ücretlendirme / Abonelik 📋
+
+**Durum:** Planlandı (detaylar daha sonra netleştirilecek)  
+**Amaç:** Ücretsiz deneme hakkı + aylık abonelik ile gelir modeli
+
+### Model
+
+| Plan | Fiyat | Hak |
+|---|---|---|
+| **Ücretsiz** | $0 | Üyelik sırasında **1 ücretsiz analiz hakkı** |
+| **Aylık Abonelik** | **$10 / ay** | (Detaylar sonra) — sınırsız veya yüksek kotalı analiz |
+
+### Akış
+
+1. Kullanıcı ücretsiz üye olur → **1 analiz hakkı** tanımlanır
+2. İlk analizi yapar (hak kullanılır)
+3. İkinci analizi denediğinde → analiz çalışır/sonuç hazırlanırken
+   **"Ücretsiz hakkınız bitti — Abone Olun"** sayfası gösterilir
+4. Kullanıcı $10/ay aboneliğe geçerse analiz hakları açılır
+
+### Yapılacaklar (taslak — netleştirilecek)
+
+- [ ] Kullanıcı başına kalan hak/kota takibi (Supabase'de `profiles` veya `usage` tablosu)
+- [ ] Analiz akışında hak kontrolü (hak yoksa abonelik sayfasına yönlendir)
+- [ ] **Abonelik sayfası** (`/subscribe` veya `/pricing`) — plan karşılaştırması + ödeme CTA
+- [ ] Ödeme sağlayıcı entegrasyonu (örn. **Stripe** — abonelik, webhook ile durum senkronizasyonu)
+- [ ] Abonelik durumu (aktif/iptal/süresi dolmuş) ile analiz erişimini eşitle
+- [ ] Faturalandırma/abonelik yönetimi (iptal, yenileme)
+- [ ] Webhook güvenliği ve abonelik durumunun backend rate-limit ile entegrasyonu
+
+> **Not:** Ödeme sağlayıcı seçimi, kota detayları (sınırsız mı, X analiz/ay mı), deneme
+> süresi ve KVKK/fatura gereksinimleri daha sonra konuşulacak.
+
+**Faz 6 Tamamlanma Kriteri:** Kullanıcı ücretsiz hakkını kullanabilir, hak bitince abonelik sayfası gösterilir, $10/ay abonelik ile erişim açılır.
 
 ---
 

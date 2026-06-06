@@ -29,6 +29,12 @@ export default function Navbar() {
 
         <div className="flex items-center gap-4">
           <Link
+            href="/medgemma"
+            className="text-sm text-slate-500 hover:text-slate-800 transition"
+          >
+            MedGemma Nedir?
+          </Link>
+          <Link
             href="/history"
             className="text-sm text-slate-500 hover:text-slate-800 transition"
           >
