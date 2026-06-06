@@ -111,7 +111,7 @@ export function ChatPanel({ analysisId, initialMessages }: ChatPanelProps) {
   }
 
   return (
-    <div className="mt-8 border-t border-slate-200 pt-6">
+    <div className="rounded-xl border border-slate-200 bg-white p-5">
       <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
         <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

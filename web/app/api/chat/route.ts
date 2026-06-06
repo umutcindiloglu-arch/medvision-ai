@@ -31,17 +31,25 @@ export async function POST(request: NextRequest) {
     .eq('analysis_id', analysis_id)
     .order('created_at', { ascending: true })
 
-  // Storage'dan görüntüyü çek, base64'e dönüştür
+  // image_url: tek yol string veya JSON array string olabilir
+  function parseFirstPath(imageUrl: string): string {
+    if (imageUrl.startsWith('[')) {
+      try { return JSON.parse(imageUrl)[0] ?? imageUrl } catch { /* fall through */ }
+    }
+    return imageUrl
+  }
+  const imagePath = parseFirstPath(analysis.image_url)
+
+  // Görüntüyü çek — başarısız olursa boş string ile devam et (opsiyonel)
+  let base64 = ''
   const { data: fileData } = await supabase.storage
     .from('medical-images')
-    .download(analysis.image_url)
+    .download(imagePath)
 
-  if (!fileData) {
-    return NextResponse.json({ error: 'Görüntü yüklenemedi.' }, { status: 500 })
+  if (fileData) {
+    const arrayBuffer = await fileData.arrayBuffer()
+    base64 = Buffer.from(arrayBuffer).toString('base64')
   }
-
-  const arrayBuffer = await fileData.arrayBuffer()
-  const base64 = Buffer.from(arrayBuffer).toString('base64')
 
   // Modal'a gönderilecek mesaj listesi (mevcut geçmiş + yeni mesaj)
   const messages = [

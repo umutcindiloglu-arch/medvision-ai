@@ -156,7 +156,7 @@ class MedGemmaBackend:
             content: str
 
         class ChatReq(BaseModel):
-            image_base64: str
+            image_base64: str = ""        # opsiyonel — yoksa görüntüsüz sohbet
             messages: list[ChatMsg]
             attachment_base64: str = ""   # opsiyonel ek görüntü/belge
 
@@ -261,7 +261,7 @@ class MedGemmaBackend:
             Görüntü ilk kullanıcı mesajına eklenir, konuşma geçmişi korunur.
             """
             try:
-                img = self._decode_image(req.image_base64)
+                img = self._decode_image(req.image_base64) if req.image_base64 else None
 
                 attachment = (
                     self._decode_image(req.attachment_base64)
@@ -271,8 +271,8 @@ class MedGemmaBackend:
                 conversation = []
                 for i, msg in enumerate(req.messages):
                     is_last = i == len(req.messages) - 1
-                    if msg.role == "user" and i == 0:
-                        # İlk mesaja orijinal görüntüyü ekle
+                    if msg.role == "user" and i == 0 and img:
+                        # İlk mesaja orijinal görüntüyü ekle (varsa)
                         conversation.append({
                             "role": "user",
                             "content": [
