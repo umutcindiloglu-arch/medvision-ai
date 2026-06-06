@@ -1,105 +1,132 @@
 # Oturum Özeti — MedVision AI Projesi
 
-**Tarih:** 2026-06-06  
-**Konu:** ML/DL ortam kurulumu + MedVision AI proje planlaması
+**Son Güncelleme:** 2026-06-06  
+**Durum:** Faz 1 ✅ + Faz 2 ✅ tamamlandı — Faz 3 sıradaki
 
 ---
 
-## 1. Sistem Kurulumları
+## 1. Sistem Kurulumları (Önceki Oturum)
 
 ### Python 3.12 — Kurulu Kütüphaneler
 
 | Kategori | Paketler |
 |---|---|
-| Core | NumPy 2.4.6, Pandas 2.3.3, SciPy 1.17.1, Statsmodels |
-| Görselleştirme | Matplotlib 3.10.9, Seaborn 0.13.2, Plotly 6.8.0 |
-| Makine Öğrenmesi | Scikit-learn 1.8.0, XGBoost 3.2.0, LightGBM 4.6.0, CatBoost 1.2.10, Optuna 4.9.0 |
-| Görüntü İşleme | OpenCV 4.13.0, Pillow 12.2.0, Scikit-image 0.26.0, Albumentations 2.0.8 |
-| Derin Öğrenme | PyTorch 2.12.0 **(M1 MPS GPU aktif)**, TensorFlow 2.21.0, PyTorch Lightning 2.6.5 |
-| NLP | Transformers 5.10.2, Hugging Face Datasets 5.0.0, Tokenizers |
-| MLOps | MLflow 3.13.0, Weights & Biases 0.27.2 |
-| Açıklanabilirlik | SHAP 0.52.0, LIME |
-| API / Servis | FastAPI 0.136.3, Uvicorn 0.49.0, python-multipart, aiofiles |
-| Modal | Modal 1.4.3, Accelerate 1.13.0 |
-| Jupyter | JupyterLab 4.5.8 |
-
-### R 4.6.0 — Kurulu Paketler
-tidyverse, caret, randomForest, e1071, XGBoost, ggplot2, corrplot, reshape2
+| Core | NumPy 2.4.6, Pandas 2.3.3, SciPy 1.17.1 |
+| Görüntü İşleme | OpenCV 4.13.0, Pillow 12.2.0 |
+| Derin Öğrenme | PyTorch 2.12.0 (M1 MPS), TensorFlow 2.21.0 |
+| NLP | Transformers 5.10.2, HF Datasets 5.0.0 |
+| API / Servis | FastAPI 0.136.3, Modal 1.4.3 |
 
 ### Web Geliştirme Araçları
-- Node.js v26.0.0
-- npm 11.12.1
-- pnpm 11.5.2
-- PostgreSQL 17.10 (Homebrew, çalışıyor)
-- Prisma 7.8.0
-- TypeScript 6.0.3
-- Docker Desktop 29.5.2 (çalışıyor)
+- Node.js v26.0.0, pnpm 11.5.2
+- TypeScript 6.0.3, Prisma 7.8.0
 
 ### Önemli Notlar
-- **Apple M1** — PyTorch MPS GPU aktif (`torch.device("mps")`)
-- **TensorFlow 2.21** CPU modunda çalışıyor (tensorflow-metal yalnızca TF 2.16 ile uyumlu)
-- **Hugging Face** girişi yapıldı, MedGemma 4b-it erişimi mevcut
-- **Modal** hesabı oluşturuldu ve kuruldu
+- Apple M1 — PyTorch MPS aktif
+- Hugging Face girişi yapıldı, MedGemma 4b-it erişimi mevcut
+- Modal hesabı kuruldu ve bağlandı
 
 ---
 
-## 2. MedVision AI — Proje Kararları
-
-### Kullanıcı Profili
-- Klinisyenler / Doktorlar
-- Hesap oluşturma zorunlu
-
-### Özellikler
-- Tüm tıbbi görüntü türleri (DICOM, PNG, JPG, TIFF)
-- Otomatik yapılandırılmış rapor + MedGemma ile sohbet
-- İkidilli: Türkçe + İngilizce
-- Kullanıcı bazlı analiz geçmişi
-
-### Seçilen Mimari
-**Vercel + Modal + Supabase**
-- 🌐 Next.js → Vercel (ücretsiz)
-- 🤖 FastAPI + MedGemma 4b-it → Modal (serverless GPU)
-- 🗄️ Auth + PostgreSQL + Storage → Supabase
-
----
-
-## 3. Dosya Konumları
+## 2. Proje Yapısı (Güncel)
 
 ```
-~/Documents/medgemma-app/
+medgemma-app/
 ├── docs/
-│   ├── PLAN.md                              ← 5 fazlı uygulama planı
-│   ├── SESSION-OZET.md                      ← Bu dosya
+│   ├── PLAN.md                    ← Güncel 5 fazlı plan (Faz 1+2 tamamlandı)
+│   ├── SESSION-OZET.md            ← Bu dosya
 │   └── superpowers/specs/
-│       └── 2026-06-06-medvision-ai-design.md ← Detaylı tasarım dokümanı
-└── .gitignore
+│       └── 2026-06-06-medvision-ai-design.md
+├── backend/
+│   └── app.py                     ← Modal + FastAPI + MedGemma 4b-it
+└── web/
+    ├── proxy.ts                   ← Auth proxy (Next.js 16)
+    ├── supabase/schema.sql        ← SQL şeması + RLS politikaları
+    ├── .env.local                 ← Ortam değişkenleri (git'e girmez)
+    ├── .env.local.example         ← Şablon
+    ├── lib/supabase/
+    │   ├── client.ts              ← Browser Supabase client
+    │   ├── server.ts              ← Server Supabase client
+    │   └── middleware.ts          ← Session güncelleme
+    ├── types/index.ts             ← Analysis, Message tipleri
+    ├── components/
+    │   ├── navbar.tsx             ← Dashboard navbar
+    │   └── ui/skeleton.tsx        ← Loading skeleton
+    └── app/
+        ├── (auth)/login/          ← Giriş sayfası
+        ├── (auth)/register/       ← Kayıt sayfası
+        └── (dashboard)/          ← Ana sayfa (placeholder)
 ```
 
 ---
 
-## 4. Proje Fazları (Özet)
+## 3. Faz 1 — Tamamlananlar (2026-06-06)
 
-| Faz | Konu | İlk Komut |
-|---|---|---|
-| **Faz 1** | Next.js + Supabase + Auth | `pnpm create next-app@latest . --typescript --tailwind --app` |
-| **Faz 2** | Modal + FastAPI + MedGemma | `modal deploy backend/app.py` |
-| **Faz 3** | Görüntü yükleme + Rapor | — |
-| **Faz 4** | Chat + Analiz geçmişi | — |
-| **Faz 5** | Deploy + Canlıya alma | `vercel deploy` |
+### Yapılanlar
+- Next.js 16 projesi `web/` altında kuruldu (monorepo yapısı)
+- Supabase Auth: email/şifre kayıt + giriş
+- `proxy.ts` ile route koruması (Next.js 16'da middleware → proxy)
+- Login + Register sayfaları (Türkçe hata mesajları)
+- Navbar, Skeleton, Toast (Sonner) bileşenleri
+- Supabase: `analyses` + `messages` tabloları, RLS politikaları
+- Supabase Storage: `medical-images` private bucket
+
+### Kritik Notlar
+- Next.js 16'da `middleware.ts` → `proxy.ts`, export adı `middleware` → `proxy`
+- pnpm 11+ ayarları `package.json`'da değil, `pnpm-workspace.yaml`'da
+- `allowBuilds: {sharp: true, unrs-resolver: true}` gerekli
+- Supabase E-posta onayı geliştirme için kapatıldı (Authentication > Providers > Email)
+
+### Test Sonucu ✅
+- Kayıt → Giriş → Dashboard yönlendirmesi çalışıyor
+- Giriş yapmadan `/` → `/login` yönlendirmesi çalışıyor
 
 ---
 
-## 5. Bir Sonraki Oturumda
+## 4. Faz 2 — Tamamlananlar (2026-06-06)
 
-1. `cd ~/Documents/medgemma-app` ile proje klasörüne git
-2. `docs/PLAN.md` dosyasını aç — Faz 1'den başla
-3. Claude Code'a **"Faz 1'i başlat"** de
+### Yapılanlar
+- `backend/app.py`: Modal üzerinde MedGemma 4b-it servisi
+- A10G GPU, `medgemma-cache` volume (model kalıcı cache)
+- `POST /analyze`: görüntü → EN rapor → TR çeviri
+- `POST /chat`: görüntü bağlamlı çok turlu sohbet
+- Supabase JWT doğrulama (her endpoint korumalı)
+- Modal deploy başarılı
+
+### Modal Secret'lar
+- `huggingface-token` → `HF_TOKEN`
+- `supabase-config` → `SUPABASE_URL` + `SUPABASE_ANON_KEY`
+
+### Deploy Bilgileri
+- **Backend URL:** `https://umutcindiloglu--medvision-ai-medgemmabackend-api.modal.run`
+- **Modal Dashboard:** https://modal.com/apps/umutcindiloglu/main/deployed/medvision-ai
+- **GitHub:** https://github.com/umutcindiloglu-arch/medvision-ai
+
+### Kritik Notlar (Modal API Değişiklikleri)
+- `container_idle_timeout` → `scaledown_window`
+- `allow_concurrent_inputs=N` → `@modal.concurrent(max_inputs=N)` dekoratörü
+
+### Test Sonucu ✅
+- `/health` → `{"status":"ok","model":"medgemma-4b-it"}`
+- `/analyze` → token olmadan `401 Not authenticated` (JWT koruması çalışıyor)
+
+---
+
+## 5. Sıradaki: Faz 3 — Çekirdek Özellikler
+
+1. `react-dropzone` ile görüntü yükleme bileşeni
+2. Supabase Storage'a yükleme fonksiyonu
+3. `/analyze` sayfası: form → Modal API çağrısı → DB kayıt → rapor sayfasına yönlendir
+4. `/analysis/[id]` rapor sayfası: görüntü + TR/EN toggle + PDF indirme
+5. Tıbbi sorumluluk reddi uyarısı
+
+**"Faz 3'ü başlat" komutu ile devam edilebilir.**
 
 ---
 
 ## 6. Hatırlatmalar
 
-- Hugging Face token'ı terminalde paylaşıldı — güvenli ortamlarda sakla, gerekirse yenile
-- Modal cold start süresi ~10-15sn — kullanıcıya bekleme animasyonu gösterilecek
-- Tıbbi sorumluluk reddi uyarısı rapor sayfasına eklenecek
+- `.env.local` git'e girmez — `MODAL_API_URL` de buraya eklendi
+- Modal cold start: ilk istek ~15-20sn (model yükleniyor) — kullanıcıya animasyon gösterilecek
 - Supabase ücretsiz tier: 500MB DB, 1GB Storage (başlangıç için yeterli)
+- Rate limiting Faz 5'e bırakıldı

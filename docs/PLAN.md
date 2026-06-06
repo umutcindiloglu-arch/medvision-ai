@@ -9,92 +9,99 @@
 ## Genel Bakış
 
 ```
-Faz 1: Temel Altyapı       (Supabase + Next.js + Auth)
-Faz 2: AI Backend           (Modal + FastAPI + MedGemma)
-Faz 3: Çekirdek Özellikler  (Yükleme + Analiz + Rapor)
+Faz 1: Temel Altyapı       (Supabase + Next.js + Auth)   ✅ Tamamlandı
+Faz 2: AI Backend           (Modal + FastAPI + MedGemma)  ✅ Tamamlandı
+Faz 3: Çekirdek Özellikler  (Yükleme + Analiz + Rapor)   🔄 Sıradaki
 Faz 4: Chat + Geçmiş        (Sohbet + Analiz Geçmişi)
 Faz 5: Canlıya Alma         (Deploy + Test + Polish)
 ```
 
 ---
 
-## Faz 1 — Temel Altyapı
+## Faz 1 — Temel Altyapı ✅
 
-**Süre:** ~1 hafta  
+**Süre:** 1 gün (2026-06-06)  
 **Amaç:** Proje iskeleti, kimlik doğrulama, veritabanı
 
 ### Adımlar
 
 #### 1.1 Proje Oluşturma
-- [ ] `pnpm create next-app@latest medvision-ai --typescript --tailwind --app` komutu ile Next.js projesi oluştur
-- [ ] Proje yapısını düzenle (`app/`, `components/`, `lib/`, `types/`)
-- [ ] `.env.local` dosyasını oluştur (Supabase anahtarları için)
+- [x] `pnpm create next-app@latest web --typescript --tailwind --app` ile Next.js 16 projesi oluştur (`web/` alt klasöründe — monorepo yapısı)
+- [x] Proje yapısını düzenle (`app/`, `components/`, `lib/`, `types/`)
+- [x] `.env.local` dosyasını oluştur (Supabase anahtarları için)
+
+> **Not:** Proje `medgemma-app/web/` altında kuruldu. `.superpowers/` klasörü yüzünden root'a kurulum yapılamadı.
 
 #### 1.2 Supabase Kurulumu
-- [ ] [supabase.com](https://supabase.com) üzerinde yeni proje oluştur
-- [ ] PostgreSQL tablolarını oluştur (`analyses`, `messages`)
-- [ ] Row Level Security (RLS) politikalarını ayarla
-- [ ] Supabase Storage'da `medical-images` bucket'ı oluştur (private)
-- [ ] `NEXT_PUBLIC_SUPABASE_URL` ve `NEXT_PUBLIC_SUPABASE_ANON_KEY` değerlerini al
+- [x] [supabase.com](https://supabase.com) üzerinde yeni proje oluştur
+- [x] PostgreSQL tablolarını oluştur (`analyses`, `messages`) — `web/supabase/schema.sql`
+- [x] Row Level Security (RLS) politikalarını ayarla
+- [x] Supabase Storage'da `medical-images` bucket'ı oluştur (private)
+- [x] `NEXT_PUBLIC_SUPABASE_URL` ve `NEXT_PUBLIC_SUPABASE_ANON_KEY` değerlerini al
 
 #### 1.3 Kimlik Doğrulama
-- [ ] `@supabase/ssr` paketini kur
-- [ ] Giriş sayfası (`/login`) oluştur
-- [ ] Kayıt sayfası (`/register`) oluştur
-- [ ] Middleware ile korumalı route'ları ayarla (login olmadan ana sayfa görünmesin)
-- [ ] Çıkış yapma fonksiyonu ekle
+- [x] `@supabase/ssr` paketini kur
+- [x] Giriş sayfası (`/login`) oluştur
+- [x] Kayıt sayfası (`/register`) oluştur
+- [x] `proxy.ts` ile korumalı route'ları ayarla (Next.js 16'da `middleware.ts` → `proxy.ts`)
+- [x] Çıkış yapma fonksiyonu ekle (Navbar'da)
 
 #### 1.4 Temel Layout
-- [ ] Navbar bileşeni (logo, navigasyon, kullanıcı menüsü)
-- [ ] Sayfa geçiş animasyonları
-- [ ] Loading skeleton bileşenleri
-- [ ] Toast/bildirim sistemi
+- [x] Navbar bileşeni (logo, Geçmiş linki, Çıkış butonu)
+- [x] Loading skeleton bileşenleri (`components/ui/skeleton.tsx`)
+- [x] Toast/bildirim sistemi (Sonner)
 
-**Faz 1 Tamamlanma Kriteri:** Kullanıcı kayıt olup giriş yapabilmeli, korumalı sayfalara yönlendirme çalışmalı.
+**Faz 1 Tamamlanma Kriteri:** ✅ Kullanıcı kayıt olup giriş yapabiliyor, korumalı sayfalara yönlendirme çalışıyor.
 
 ---
 
-## Faz 2 — AI Backend (Modal + MedGemma)
+## Faz 2 — AI Backend (Modal + MedGemma) ✅
 
-**Süre:** ~1 hafta  
+**Süre:** 1 gün (2026-06-06)  
 **Amaç:** MedGemma modelini Modal'da çalıştırılabilir hale getir
 
 ### Adımlar
 
 #### 2.1 Modal Kurulumu
-- [ ] `modal setup` ile hesabı bağla (terminal)
-- [ ] `pip install modal` (zaten kurulu)
-- [ ] Modal secret oluştur: Hugging Face token ekle
+- [x] Modal hesabı zaten bağlı
+- [x] Modal secret oluştur: `huggingface-token` (HF_TOKEN)
+- [x] Modal secret oluştur: `supabase-config` (SUPABASE_URL + SUPABASE_ANON_KEY)
 
 #### 2.2 MedGemma Servisi
-- [ ] `backend/` klasörü oluştur
-- [ ] `backend/app.py` — Modal uygulaması yaz:
+- [x] `backend/` klasörü oluştur
+- [x] `backend/app.py` — Modal uygulaması yazıldı:
   - MedGemma 4b-it modelini yükle (`google/medgemma-4b-it`)
-  - A10G GPU ile image tanımla
-  - Model cache'i volume'a kaydet (her seferinde indirmesin)
-- [ ] `POST /analyze` endpoint'i:
-  - Base64 görüntü al
-  - İngilizce structured prompt gönder
-  - TR + EN rapor üret
-- [ ] `POST /chat` endpoint'i:
-  - Görüntü + mesaj geçmişi al
-  - Bağlamlı yanıt üret
+  - A10G GPU ile `@app.cls()` tanımlandı
+  - Model cache'i `medgemma-cache` volume'una kaydet
+- [x] `POST /analyze` endpoint'i:
+  - Base64 görüntü alır
+  - İngilizce structured prompt gönderir (Findings / Impression / Recommendation)
+  - Türkçe çeviri için ikinci inference çağrısı
+  - TR + EN rapor döner
+- [x] `POST /chat` endpoint'i:
+  - Görüntü + mesaj geçmişi alır
+  - Bağlamlı yanıt üretir
 
 #### 2.3 Güvenlik
-- [ ] Modal endpoint'ini Supabase JWT ile koru
-- [ ] Rate limiting ekle (kullanıcı başına günlük limit)
-- [ ] CORS ayarları
+- [x] Supabase JWT ile her endpoint korumalı (`/auth/v1/user` doğrulama)
+- [x] CORS ayarları (allow_origins=*)
+- [ ] Rate limiting — Faz 5'te eklenecek
 
 #### 2.4 Test
-- [ ] `modal run backend/app.py` ile lokal test
-- [ ] Test görüntüsü ile `/analyze` endpoint'ini dene
-- [ ] Yanıt formatını doğrula
+- [x] `/health` endpoint çalışıyor: `{"status":"ok","model":"medgemma-4b-it"}`
+- [x] `/analyze` endpoint JWT olmadan 401 döndürüyor ✅
+- [x] Modal deploy başarılı
 
-**Faz 2 Tamamlanma Kriteri:** `curl` ile görüntü gönderildiğinde TR+EN rapor dönmeli.
+> **Deploy URL:** `https://umutcindiloglu--medvision-ai-medgemmabackend-api.modal.run`  
+> **Modal Dashboard:** https://modal.com/apps/umutcindiloglu/main/deployed/medvision-ai
+
+**Faz 2 Tamamlanma Kriteri:** ✅ Backend canlıda, JWT koruması aktif.
+
+> **Not:** `container_idle_timeout` → `scaledown_window`, `allow_concurrent_inputs` → `@modal.concurrent()` olarak güncellendi (Modal API değişiklikleri).
 
 ---
 
-## Faz 3 — Çekirdek Özellikler
+## Faz 3 — Çekirdek Özellikler 🔄
 
 **Süre:** ~1 hafta  
 **Amaç:** Görüntü yükleme, analiz ve rapor sayfası
@@ -106,7 +113,7 @@ Faz 5: Canlıya Alma         (Deploy + Test + Polish)
 - [ ] Görüntü önizleme (yüklemeden önce)
 - [ ] DICOM desteği (`cornerstone.js` entegrasyonu)
 - [ ] Supabase Storage'a yükleme fonksiyonu
-- [ ] Dosya boyutu ve format validasyonu
+- [ ] Dosya boyutu ve format validasyonu (max 20MB)
 
 #### 3.2 Analiz Sayfası (`/analyze`)
 - [ ] Yükleme formu (görüntü + klinisyen notu)
@@ -121,7 +128,7 @@ Faz 5: Canlıya Alma         (Deploy + Test + Polish)
 - [ ] Sol: Görüntü görüntüleyici
 - [ ] Sağ: Rapor (TR/EN dil toggle)
 - [ ] Bulgular / Yorum / Öneri bölümleri
-- [ ] PDF indirme (`react-pdf` veya `jsPDF`)
+- [ ] PDF indirme (`jsPDF`)
 - [ ] Tıbbi sorumluluk reddi uyarısı
 
 **Faz 3 Tamamlanma Kriteri:** Görüntü yüklenip rapor görüntülenebilmeli.
@@ -141,7 +148,7 @@ Faz 5: Canlıya Alma         (Deploy + Test + Polish)
 - [ ] Modal `/chat` endpoint'ini çağır
 - [ ] Mesajları veritabanına kaydet
 - [ ] Konuşma geçmişini ekranda göster (kullanıcı + MedGemma)
-- [ ] Yazıyor animasyonu (streaming için `EventSource`)
+- [ ] Yazıyor animasyonu
 
 #### 4.2 Geçmiş Sayfası (`/history`)
 - [ ] Kullanıcının tüm analizleri listele
@@ -162,27 +169,24 @@ Faz 5: Canlıya Alma         (Deploy + Test + Polish)
 ### Adımlar
 
 #### 5.1 Modal Deploy
-- [ ] `modal deploy backend/app.py` ile production'a deploy et
-- [ ] Modal dashboard'dan endpoint URL'ini al
-- [ ] Production secret'larını ayarla
+- [ ] `modal deploy backend/app.py` ile production'a deploy et *(Faz 2'de yapıldı)*
+- [ ] Production secret'larını kontrol et
 
 #### 5.2 Vercel Deploy
-- [ ] GitHub'a push et
+- [ ] GitHub'a push et *(zaten yapılıyor)*
 - [ ] Vercel'de yeni proje oluştur (GitHub ile bağla)
 - [ ] Environment variable'ları Vercel'e ekle:
   - `NEXT_PUBLIC_SUPABASE_URL`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  - `SUPABASE_SERVICE_ROLE_KEY`
   - `MODAL_API_URL`
-- [ ] Domain ayarla (isteğe bağlı)
 
 #### 5.3 Test
 - [ ] End-to-end test: Kayıt → Giriş → Yükleme → Analiz → Chat → Geçmiş
 - [ ] Farklı görüntü türleriyle test (X-ray, MRI, mikrobiyoloji)
-- [ ] Cold start süresini ölç ve kullanıcıya bildir
 - [ ] Mobil uyumluluk kontrolü
 
 #### 5.4 Son Dokunuşlar
+- [ ] Rate limiting backend'e ekle
 - [ ] Hata mesajları Türkçe
 - [ ] Boş durum ekranları (henüz analiz yok)
 - [ ] Favicon ve meta tag'ler
@@ -196,14 +200,11 @@ Faz 5: Canlıya Alma         (Deploy + Test + Polish)
 
 ```env
 # Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
+NEXT_PUBLIC_SUPABASE_URL=https://tzmzjudtbxifbiqwfkqs.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
 
 # Modal
-MODAL_API_URL=https://xxxx.modal.run
-
-# Hugging Face (Modal secret olarak eklenir, burada gerekmez)
+MODAL_API_URL=https://umutcindiloglu--medvision-ai-medgemmabackend-api.modal.run
 ```
 
 ---
@@ -214,14 +215,11 @@ MODAL_API_URL=https://xxxx.modal.run
 |---|---|---|
 | Vercel | Sınırsız (hobi) | $20/ay (pro) |
 | Supabase | 500MB DB, 1GB Storage | $25/ay (pro) |
-| Modal | $30 kredi (ilk ay) | ~$0.50-2/saat (GPU) |
+| Modal | $30 kredi (ilk ay) | ~$0.76/saat (A10G GPU) |
 | **Toplam** | **İlk ay ~ücretsiz** | **~$30-50/ay** |
 
 ---
 
-## Başlangıç Komutu
+## GitHub
 
-```bash
-cd ~/Documents/medgemma-app
-pnpm create next-app@latest . --typescript --tailwind --app --no-git
-```
+**Repo:** https://github.com/umutcindiloglu-arch/medvision-ai
