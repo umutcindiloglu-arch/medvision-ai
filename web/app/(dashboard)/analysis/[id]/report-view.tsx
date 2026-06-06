@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { Analysis } from '@/types'
 
 interface ReportViewProps {
@@ -43,7 +43,6 @@ function parseReportSections(text: string) {
 
 export function ReportView({ analysis, imageUrl }: ReportViewProps) {
   const [lang, setLang] = useState<'tr' | 'en'>('tr')
-  const reportRef = useRef<HTMLDivElement>(null)
 
   const reportText = lang === 'tr' ? analysis.report_tr : analysis.report_en
   const sections = reportText ? parseReportSections(reportText) : []
@@ -53,38 +52,68 @@ export function ReportView({ analysis, imageUrl }: ReportViewProps) {
   })
 
   async function handleDownloadPdf() {
-    if (!reportRef.current) return
-
-    const html2canvas = (await import('html2canvas')).default
     const { jsPDF } = await import('jspdf')
 
-    const canvas = await html2canvas(reportRef.current, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-    })
+    // Roboto fontunu yükle — Latin Extended içerir, Türkçe karakterleri destekler
+    const fontRes = await fetch('/fonts/Roboto-Regular.ttf')
+    const fontBuffer = await fontRes.arrayBuffer()
+    const fontBase64 = btoa(
+      new Uint8Array(fontBuffer).reduce((s, b) => s + String.fromCharCode(b), '')
+    )
 
-    const imgData = canvas.toDataURL('image/png')
     const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+    doc.addFileToVFS('Roboto-Regular.ttf', fontBase64)
+    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal')
+    doc.setFont('Roboto')
 
-    const pageWidth = doc.internal.pageSize.getWidth()
-    const pageHeight = doc.internal.pageSize.getHeight()
-    const margin = 10
-    const imgWidth = pageWidth - margin * 2
-    const imgHeight = (canvas.height * imgWidth) / canvas.width
+    // Başlık
+    doc.setFontSize(18)
+    doc.setTextColor(15, 23, 42)
+    doc.text('MedVision AI — Analiz Raporu', 20, 22)
 
-    let y = margin
-    let remainingHeight = imgHeight
+    // Meta bilgiler
+    doc.setFontSize(10)
+    doc.setTextColor(100, 116, 139)
+    doc.text(`Tarih: ${formattedDate}`, 20, 32)
+    if (analysis.image_name) doc.text(`Görüntü: ${analysis.image_name}`, 20, 38)
 
-    // Görüntü birden fazla sayfaya sığmıyorsa böl
-    while (remainingHeight > 0) {
-      doc.addImage(imgData, 'PNG', margin, y, imgWidth, imgHeight)
-      remainingHeight -= pageHeight - margin * 2
-      if (remainingHeight > 0) {
+    // Uyarı çizgisi
+    doc.setDrawColor(226, 232, 240)
+    doc.line(20, 44, 190, 44)
+
+    let y = 54
+
+    for (const section of sections) {
+      // Bölüm başlığı
+      doc.setFontSize(12)
+      doc.setFont('Roboto', 'normal')
+      doc.setTextColor(29, 78, 216)
+      doc.text(section.title.toUpperCase(), 20, y)
+      y += 7
+
+      // Bölüm içeriği
+      doc.setFontSize(11)
+      doc.setTextColor(30, 41, 59)
+      const lines = doc.splitTextToSize(section.content, 170)
+      doc.text(lines, 20, y)
+      y += lines.length * 6 + 10
+
+      if (y > 270) {
         doc.addPage()
-        y = margin - (imgHeight - remainingHeight)
+        doc.addFileToVFS('Roboto-Regular.ttf', fontBase64)
+        doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal')
+        doc.setFont('Roboto')
+        y = 20
       }
     }
+
+    // Sorumluluk reddi
+    doc.setFontSize(8)
+    doc.setTextColor(146, 64, 14)
+    doc.text(
+      'Bu rapor yalnızca araştırma ve destek amaçlıdır. Tıbbi teşhis yerine geçmez.',
+      20, Math.min(y + 6, 282)
+    )
 
     doc.save(`medvision-rapor-${analysis.id.slice(0, 8)}.pdf`)
   }
@@ -184,7 +213,7 @@ export function ReportView({ analysis, imageUrl }: ReportViewProps) {
 
         {/* Rapor Bölümleri */}
         {sections.length > 0 ? (
-          <div ref={reportRef} className="space-y-4">
+          <div className="space-y-4">
             {sections.map((section) => (
               <div key={section.title} className="rounded-xl border border-slate-200 bg-white p-5">
                 <h3 className="text-sm font-semibold text-blue-700 uppercase tracking-wide mb-3">
