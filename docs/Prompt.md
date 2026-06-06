@@ -1,0 +1,1 @@
+Bu zamana kadar yaptığın işlemlerin hepsini not al ve bi dosyaya kayıt et. Her fazdan sonra bu dosyayı güncelle. Fazın bitmesi için testlerini yap ve başarılı olsun tüm yaptığın testler. ardından commit et ve github'a yükle. yükleme yaptıktan sonra github'a sonrasında pushla güncelle. tüm fazlarda bunu yap.
