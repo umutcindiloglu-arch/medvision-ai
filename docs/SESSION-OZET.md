@@ -1,7 +1,8 @@
 # Oturum Özeti — MedVision AI Projesi
 
 **Son Güncelleme:** 2026-06-06  
-**Durum:** Faz 1 ✅ + Faz 2 ✅ + Faz 3 ✅ tamamlandı — Faz 4 sıradaki
+**Durum:** 🎉 **Tüm fazlar tamamlandı** (Faz 1–5 ✅) — uygulama canlıda  
+**Canlı URL:** [yapayzekahekim.com](https://yapayzekahekim.com)
 
 ---
 
@@ -148,17 +149,53 @@ medgemma-app/
 - PDF Türkçe karakterler düzgün (Roboto TTF)
 - Modal deploy başarılı, kapsamlı rapor üretimi onaylandı
 
-## 6. Faz 4 — Chat + Geçmiş (Sıradaki)
+## 6. Faz 4 — Tamamlananlar (2026-06-06)
 
-1. Rapor sayfasının altına chat paneli (`/api/chat` route)
-2. Mesajları DB'ye kaydet (`messages` tablosu)
-3. `/history` sayfası — tüm analizleri listele, arama/filtreleme, analiz silme
+### Oluşturulan / Güncellenen Dosyalar
+- `components/chat-panel.tsx` — Rapor altındaki sohbet paneli (mesaj geçmişi, yazıyor animasyonu, ataç ile dosya ekleme)
+- `app/api/chat/route.ts` — Modal `/chat` proxy; orijinal görüntü Storage'dan çekilip base64 olarak gönderilir, mesajlar DB'ye kaydedilir
+- `app/(dashboard)/history/page.tsx` + `history-list.tsx` — Geçmiş listesi, arama, silme, inline rename
+- `app/api/analysis/[id]/route.ts` — DELETE (Storage + DB) + PATCH (image_name güncelleme)
+- `components/multi-image-dropzone.tsx` — 5 görüntüye kadar çoklu yükleme
+- `report-view.tsx` — çoklu görüntü galerisi + navigasyon
+
+### Özellikler
+- MedGemma ile bağlamlı sohbet (görüntü ilk mesaja, ek dosya son mesaja eklenir)
+- Sohbete opsiyonel ek görüntü/PDF
+- Çoklu görüntü analizi (`image_url` = tek yol veya JSON array string, geriye uyumlu)
+- Geçmiş: arama, silme, yeniden adlandırma
 
 ---
 
-## 6. Hatırlatmalar
+## 7. Faz 5 — Tamamlananlar (2026-06-06)
+
+### Deploy
+- **Vercel:** GitHub bağlı, otomatik deploy. **Root Directory = `web`** (monorepo, kritik)
+- **Modal:** `modal deploy backend/app.py` ile production'da
+- **Özel alan adı:** `yapayzekahekim.com` (Hostinger DNS → Vercel)
+  - A: `@` → `216.198.79.1`
+  - CNAME: `www` → `*.vercel-dns-017.com`
+
+### Son Dokunuşlar
+- Rate limiting: 10 analiz/saat (kullanıcı JWT ile Supabase REST count sorgusu)
+- Favicon (`app/icon.svg`), Open Graph + viewport meta, `robots: noindex` (tıbbi)
+- 404 sayfaları (global + analiz), boş durum ekranları, Türkçe hata mesajları
+- PDF: jsPDF → **pdfmake** (gömülü Roboto, tam Türkçe/Unicode)
+
+### Deploy Sonrası Düzeltmeler (canlı testler)
+- Sohbette görüntü opsiyonel (multi-image JSON parse + boş string fallback; backend `image_base64` opsiyonel)
+- Chat input + arama yazı renkleri (`text-slate-800`), chat paneli kart stili
+- **Cold-start:** `maxDuration=60` (Vercel Hobby max) + `/api/warmup` ön ısıtma
+
+### Kritik Notlar
+- Vercel Hobby planı: fonksiyon timeout max **60s** — uzun cold-start'larda analiz nadiren sınıra yaklaşabilir
+- `MODAL_API_URL` server-side only (NEXT_PUBLIC_ öneki yok)
+
+---
+
+## 8. Hatırlatmalar
 
 - `.env.local` git'e girmez — `MODAL_API_URL` de buraya eklendi
-- Modal cold start: ilk istek ~15-20sn (model yükleniyor) — kullanıcıya animasyon gösterilecek
+- Modal cold start: container 5 dk boştan sonra kapanır; `/api/warmup` ile sayfa açılınca önceden uyandırılıyor
 - Supabase ücretsiz tier: 500MB DB, 1GB Storage (başlangıç için yeterli)
-- Rate limiting Faz 5'e bırakıldı
+- Rate limiting aktif: 10 analiz/saat

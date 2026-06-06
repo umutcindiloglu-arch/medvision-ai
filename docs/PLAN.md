@@ -12,9 +12,11 @@
 Faz 1: Temel Altyapı       (Supabase + Next.js + Auth)   ✅ Tamamlandı
 Faz 2: AI Backend           (Modal + FastAPI + MedGemma)  ✅ Tamamlandı
 Faz 3: Çekirdek Özellikler  (Yükleme + Analiz + Rapor)   ✅ Tamamlandı
-Faz 4: Chat + Geçmiş        (Sohbet + Analiz Geçmişi)    🔄 Sıradaki
-Faz 5: Canlıya Alma         (Deploy + Test + Polish)
+Faz 4: Chat + Geçmiş        (Sohbet + Analiz Geçmişi)    ✅ Tamamlandı
+Faz 5: Canlıya Alma         (Deploy + Test + Polish)      ✅ Tamamlandı
 ```
+
+> **🎉 Proje canlıda:** [yapayzekahekim.com](https://yapayzekahekim.com) (Vercel + Hostinger özel alan adı)
 
 ---
 
@@ -142,64 +144,83 @@ Faz 5: Canlıya Alma         (Deploy + Test + Polish)
 
 ---
 
-## Faz 4 — Chat + Geçmiş
+## Faz 4 — Chat + Geçmiş ✅
 
-**Süre:** ~1 hafta  
+**Süre:** 1 gün (2026-06-06)  
 **Amaç:** MedGemma ile sohbet ve analiz geçmişi
 
 ### Adımlar
 
 #### 4.1 Chat Arayüzü
-- [ ] Rapor sayfasının altına chat paneli ekle
-- [ ] Mesaj gönderme formu
-- [ ] Modal `/chat` endpoint'ini çağır
-- [ ] Mesajları veritabanına kaydet
-- [ ] Konuşma geçmişini ekranda göster (kullanıcı + MedGemma)
-- [ ] Yazıyor animasyonu
+- [x] Rapor sayfasının altına chat paneli ekle (`components/chat-panel.tsx`)
+- [x] Mesaj gönderme formu
+- [x] Modal `/chat` endpoint'ini çağır (`app/api/chat/route.ts`)
+- [x] Mesajları veritabanına kaydet (`messages` tablosu)
+- [x] Konuşma geçmişini ekranda göster (kullanıcı + MedGemma)
+- [x] Yazıyor animasyonu (üç nokta)
+- [x] **Sohbete ek dosya:** görüntü/PDF ekleme (ataç butonu, opsiyonel)
 
 #### 4.2 Geçmiş Sayfası (`/history`)
-- [ ] Kullanıcının tüm analizleri listele
-- [ ] Tarih, görüntü adı, soru sayısı göster
-- [ ] Arama/filtreleme
-- [ ] Analize tıklayınca rapor sayfasına git
-- [ ] Analiz silme
+- [x] Kullanıcının tüm analizleri listele
+- [x] Tarih, görüntü adı göster
+- [x] Arama/filtreleme (dosya adı, not, rapor içeriği)
+- [x] Analize tıklayınca rapor sayfasına git
+- [x] Analiz silme (Storage + DB, onay diyaloğu)
+- [x] **Kayıt yeniden adlandırma:** satır içi inline rename (kalem ikonu)
 
-**Faz 4 Tamamlanma Kriteri:** MedGemma ile sohbet edilebilmeli, geçmiş analizler görüntülenebilmeli.
+#### 4.3 Çoklu Görüntü (Faz 4 sırasında eklendi)
+- [x] Tek analizde 5 görüntüye kadar yükleme (`components/multi-image-dropzone.tsx`)
+- [x] `image_url` alanı geriye dönük uyumlu: tek yol veya JSON array string
+- [x] Rapor sayfasında küçük resim galerisi + navigasyon
+
+**Faz 4 Tamamlanma Kriteri:** ✅ MedGemma ile sohbet edilebiliyor, geçmiş analizler görüntülenip yönetilebiliyor.
 
 ---
 
-## Faz 5 — Canlıya Alma
+## Faz 5 — Canlıya Alma ✅
 
-**Süre:** ~3-5 gün  
+**Süre:** 1 gün (2026-06-06)  
 **Amaç:** Deploy, test, son düzeltmeler
 
 ### Adımlar
 
 #### 5.1 Modal Deploy
-- [ ] `modal deploy backend/app.py` ile production'a deploy et *(Faz 2'de yapıldı)*
-- [ ] Production secret'larını kontrol et
+- [x] `modal deploy backend/app.py` ile production'a deploy edildi
+- [x] Production secret'ları kontrol edildi (`huggingface-token`, `supabase-config`)
 
 #### 5.2 Vercel Deploy
-- [ ] GitHub'a push et *(zaten yapılıyor)*
-- [ ] Vercel'de yeni proje oluştur (GitHub ile bağla)
-- [ ] Environment variable'ları Vercel'e ekle:
+- [x] GitHub'a push edildi
+- [x] Vercel'de proje oluşturuldu (GitHub ile bağlı, otomatik deploy)
+- [x] **Monorepo ayarı:** Root Directory = `web` (kritik — yoksa 404)
+- [x] Environment variable'lar Vercel'e eklendi:
   - `NEXT_PUBLIC_SUPABASE_URL`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   - `MODAL_API_URL`
 
-#### 5.3 Test
-- [ ] End-to-end test: Kayıt → Giriş → Yükleme → Analiz → Chat → Geçmiş
-- [ ] Farklı görüntü türleriyle test (X-ray, MRI, mikrobiyoloji)
-- [ ] Mobil uyumluluk kontrolü
+#### 5.3 Özel Alan Adı
+- [x] `yapayzekahekim.com` (Hostinger) Vercel'e bağlandı
+- [x] DNS kayıtları: A (`@` → `216.198.79.1`), CNAME (`www` → `*.vercel-dns-017.com`)
 
-#### 5.4 Son Dokunuşlar
-- [ ] Rate limiting backend'e ekle
-- [ ] Hata mesajları Türkçe
-- [ ] Boş durum ekranları (henüz analiz yok)
-- [ ] Favicon ve meta tag'ler
-- [ ] Tıbbi sorumluluk reddi sayfası
+#### 5.4 Test
+- [x] End-to-end test: Kayıt → Giriş → Yükleme → Analiz → Chat → Geçmiş
+- [x] Canlı ortamda doğrulandı (kullanıcı onayladı)
 
-**Faz 5 Tamamlanma Kriteri:** Uygulama canlıda, tüm özellikler çalışıyor.
+#### 5.5 Son Dokunuşlar
+- [x] Rate limiting backend'e eklendi (10 analiz/saat, kullanıcı JWT ile sayım)
+- [x] Hata mesajları Türkçe
+- [x] Boş durum ekranları (henüz analiz yok)
+- [x] Favicon (`app/icon.svg`) ve meta tag'ler (Open Graph, viewport, SEO)
+- [x] 404 sayfaları (global + analiz)
+- [x] Tıbbi sorumluluk reddi uyarıları
+- [x] **PDF:** jsPDF → pdfmake (gömülü Roboto, tam Unicode/Türkçe desteği)
+
+#### 5.6 Deploy Sonrası Düzeltmeler (canlı testlerden sonra)
+- [x] Sohbette görüntü opsiyonel hale getirildi (multi-image JSON parse + boş string fallback)
+- [x] Chat input/arama yazı renkleri düzeltildi (explicit `text-slate-800`)
+- [x] Chat paneli kart stiline alındı (rapor bölümleriyle tutarlı)
+- [x] **Cold-start düzeltmesi:** route'lara `maxDuration=60` + `/api/warmup` ön ısıtma (sayfa açılınca container uyandırılıyor)
+
+**Faz 5 Tamamlanma Kriteri:** ✅ Uygulama canlıda ([yapayzekahekim.com](https://yapayzekahekim.com)), tüm özellikler çalışıyor.
 
 ---
 

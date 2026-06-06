@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MedVision AI — Web (Frontend)
 
-## Getting Started
+MedGemma 4b-it tabanlı tıbbi görüntü analiz platformunun Next.js 16 web uygulaması.
 
-First, run the development server:
+**Canlı:** [yapayzekahekim.com](https://yapayzekahekim.com)
+
+## Teknolojiler
+
+- **Next.js 16** (App Router, TypeScript)
+- **Tailwind CSS 4**
+- **Supabase** — Auth, PostgreSQL, Storage (`medical-images` private bucket)
+- **Modal** — MedGemma 4b-it için serverless GPU backend (`../backend/app.py`)
+
+## Geliştirme
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+[http://localhost:3000](http://localhost:3000) adresinde açılır.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Ortam Değişkenleri (`.env.local`)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://<proje>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+MODAL_API_URL=https://<...>.modal.run   # server-side only, NEXT_PUBLIC_ öneki YOK
+```
 
-## Learn More
+## Özellikler
 
-To learn more about Next.js, take a look at the following resources:
+- Email/şifre kimlik doğrulama (`proxy.ts` ile route koruması)
+- Çoklu görüntü yükleme (5'e kadar) ve MedGemma analizi
+- TR/EN rapor görüntüleme + PDF indirme (pdfmake, tam Türkçe desteği)
+- Rapor bağlamında MedGemma ile sohbet (opsiyonel ek görüntü/PDF)
+- Analiz geçmişi: arama, yeniden adlandırma, silme
+- Rate limiting (10 analiz/saat), cold-start ön ısıtma (`/api/warmup`)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Dağıtım (Vercel)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- GitHub'a push → otomatik deploy
+- **Root Directory = `web`** (monorepo — bu ayar yapılmazsa 404 alınır)
+- Build: `pnpm build` · Install: `pnpm install` · Output: `.next`
 
-## Deploy on Vercel
+## Proje Yapısı
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+web/
+├── app/
+│   ├── (auth)/            # login, register
+│   ├── (dashboard)/       # analyze, analysis/[id], history, ana sayfa
+│   └── api/               # analyze, chat, analysis/[id], warmup proxy route'ları
+├── components/            # chat-panel, multi-image-dropzone, navbar ...
+├── lib/supabase/          # client, server, storage yardımcıları
+├── types/                 # Analysis, Message tipleri
+└── proxy.ts               # Auth proxy (Next.js 16'da middleware yerine)
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Detaylı plan ve oturum geçmişi için `../docs/PLAN.md` ve `../docs/SESSION-OZET.md`.
