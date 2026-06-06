@@ -2,6 +2,7 @@ import modal
 import os
 import base64
 from io import BytesIO
+from datetime import datetime, timedelta, timezone
 
 app = modal.App("medvision-ai")
 
@@ -104,8 +105,10 @@ class MedGemmaBackend:
         SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
         bearer = HTTPBearer()
 
+        HOURLY_LIMIT = 10
+
         async def auth(creds: HTTPAuthorizationCredentials = Depends(bearer)):
-            """Supabase JWT token'ını doğrular."""
+            """Supabase JWT token'ını doğrular, kullanıcı bilgisi ve token'ı döner."""
             async with httpx.AsyncClient() as c:
                 r = await c.get(
                     f"{SUPABASE_URL}/auth/v1/user",
@@ -116,7 +119,33 @@ class MedGemmaBackend:
                 )
             if r.status_code != 200:
                 raise HTTPException(status_code=401, detail="Geçersiz oturum. Lütfen tekrar giriş yapın.")
-            return r.json()
+            return {"user": r.json(), "token": creds.credentials}
+
+        async def check_rate_limit(user_id: str, token: str):
+            """Kullanıcının son 1 saatteki analiz sayısını kontrol eder."""
+            one_hour_ago = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+            async with httpx.AsyncClient() as c:
+                r = await c.get(
+                    f"{SUPABASE_URL}/rest/v1/analyses",
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "apikey": SUPABASE_KEY,
+                        "Prefer": "count=exact",
+                        "Range": "0-0",
+                    },
+                    params={
+                        "user_id": f"eq.{user_id}",
+                        "created_at": f"gte.{one_hour_ago}",
+                        "select": "id",
+                    },
+                )
+            content_range = r.headers.get("Content-Range", "0/0")
+            total = int(content_range.split("/")[-1]) if "/" in content_range else 0
+            if total >= HOURLY_LIMIT:
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Saatlik analiz limitine ulaştınız ({HOURLY_LIMIT}/saat). Lütfen bir saat sonra tekrar deneyin.",
+                )
 
         class AnalyzeReq(BaseModel):
             images_base64: list[str]   # 1-5 görüntü
@@ -136,12 +165,15 @@ class MedGemmaBackend:
             return {"status": "ok", "model": "medgemma-4b-it"}
 
         @web.post("/analyze")
-        async def analyze(req: AnalyzeReq, user=Depends(auth)):
+        async def analyze(req: AnalyzeReq, auth_data=Depends(auth)):
             """
             Tıbbi görüntüyü analiz eder.
             İngilizce kapsamlı rapor üretir, ardından Türkçeye çevirir.
             """
             try:
+                user = auth_data["user"]
+                await check_rate_limit(user["id"], auth_data["token"])
+
                 images = [self._decode_image(b64) for b64 in req.images_base64]
                 image_count = len(images)
 
@@ -223,7 +255,7 @@ class MedGemmaBackend:
                 raise HTTPException(status_code=500, detail=f"Analiz hatası: {str(e)}")
 
         @web.post("/chat")
-        async def chat(req: ChatReq, user=Depends(auth)):
+        async def chat(req: ChatReq, auth_data=Depends(auth)):
             """
             MedGemma ile bağlamlı sohbet.
             Görüntü ilk kullanıcı mesajına eklenir, konuşma geçmişi korunur.
