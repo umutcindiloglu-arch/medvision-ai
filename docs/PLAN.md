@@ -11,8 +11,8 @@
 ```
 Faz 1: Temel Altyapı       (Supabase + Next.js + Auth)   ✅ Tamamlandı
 Faz 2: AI Backend           (Modal + FastAPI + MedGemma)  ✅ Tamamlandı
-Faz 3: Çekirdek Özellikler  (Yükleme + Analiz + Rapor)   🔄 Sıradaki
-Faz 4: Chat + Geçmiş        (Sohbet + Analiz Geçmişi)
+Faz 3: Çekirdek Özellikler  (Yükleme + Analiz + Rapor)   ✅ Tamamlandı
+Faz 4: Chat + Geçmiş        (Sohbet + Analiz Geçmişi)    🔄 Sıradaki
 Faz 5: Canlıya Alma         (Deploy + Test + Polish)
 ```
 

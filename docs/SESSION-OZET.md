@@ -131,21 +131,28 @@ medgemma-app/
 
 ### Kritik Notlar
 - `MODAL_API_URL` environment değişkeni **NEXT_PUBLIC_ öneki olmadan** kalır (server-side only)
-- PDF oluşturma: jsPDF dinamik import (browser-only, click handler içinde)
+- PDF: jsPDF + `/public/fonts/Roboto-Regular.ttf` (TTF runtime fetch) — Türkçe karakter desteği
 - Görüntü storage path'i DB'de saklanır; rapor sayfasında imzalı URL oluşturulur (1 saat geçerli)
 - `pnpm-workspace.yaml`'a `core-js: true` eklendi (jsPDF bağımlılığı)
+- Supabase Storage RLS politikaları `storage.objects` tablosuna ayrıca eklendi (INSERT/SELECT/DELETE)
+
+### Backend Prompt Güncellemesi
+- Hekim odaklı sistematik bulgular (boyut, morfoloji, kenar, dansite/sinyal, komşu yapılar)
+- Önceliklendirilmiş ayırıcı tanı + aciliyet bayrağı
+- Spesifik öneriler: modalite, lab, uzmanlık sevk, takip zaman çizelgesi
+- `max_new_tokens` 600 → 1400
 
 ### Test Sonucu ✅
 - `pnpm build` başarılı, TypeScript hatasız
+- Storage RLS düzeltildi, görüntü yükleme çalışıyor
+- PDF Türkçe karakterler düzgün (Roboto TTF)
+- Modal deploy başarılı, kapsamlı rapor üretimi onaylandı
 
-## 6. Sıradaki: Faz 4 — Chat + Geçmiş
+## 6. Faz 4 — Chat + Geçmiş (Sıradaki)
 
 1. Rapor sayfasının altına chat paneli (`/api/chat` route)
 2. Mesajları DB'ye kaydet (`messages` tablosu)
-3. `/history` sayfası — tüm analizleri listele, arama/filtreleme
-4. Analiz silme
-
-**"Faz 4'ü başlat" komutu ile devam edilebilir.**
+3. `/history` sayfası — tüm analizleri listele, arama/filtreleme, analiz silme
 
 ---
 
