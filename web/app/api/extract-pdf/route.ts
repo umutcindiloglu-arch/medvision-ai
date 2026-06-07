@@ -16,10 +16,9 @@ export async function POST(request: NextRequest) {
 
   const buffer = Buffer.from(await file.arrayBuffer())
 
-  // pdf-parse/lib/pdf-parse.js — doğrudan lib dosyasını import ediyoruz, aksi hâlde
-  // paket kök import sırasında test PDF'i okumaya çalışır ve Next.js'de hata fırlatır.
+  // serverExternalPackages: ['pdf-parse'] — next.config.ts ile bundle dışında tutuluyor
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const pdfParse = require('pdf-parse/lib/pdf-parse.js') as (buf: Buffer) => Promise<{ text: string }>
+  const pdfParse = require('pdf-parse') as (buf: Buffer) => Promise<{ text: string }>
   const { text } = await pdfParse(buffer)
 
   const cleaned = text.replace(/\s+/g, ' ').trim()
