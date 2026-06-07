@@ -16,6 +16,8 @@ Faz 4: Chat + Geçmiş        (Sohbet + Analiz Geçmişi)    ✅ Tamamlandı
 Faz 5: Canlıya Alma         (Deploy + Test + Polish)      ✅ Tamamlandı
 Faz 6: UI/UX + i18n         (Landing + TR/EN + Fiyatlar) ✅ Tamamlandı
 Faz 7: Ücretlendirme        (Ücretsiz hak + Abonelik)    🔄 Kısmen uygulandı
+Faz 8: Admin Paneli         (Kullanıcı istatistikleri)    🔄 Kodlandı, env eksik
+Faz 9: Multi-Model Consensus (MedGemma+Claude+LLaVA+BioViL) ⏳ Planlandı
 ```
 
 > **🎉 Proje canlıda:** [yapayzekahekim.com](https://yapayzekahekim.com) (Vercel + Hostinger özel alan adı)
@@ -298,6 +300,213 @@ Faz 7: Ücretlendirme        (Ücretsiz hak + Abonelik)    🔄 Kısmen uyguland
 - Gelir sütunu → Stripe entegrasyonu sonrası eklenecek
 
 > **Güvenlik:** `/admin` sayfası ve `/api/admin/stats` endpoint'i server-side `ADMIN_EMAIL` kontrolü ile korunuyor. Yanlış kullanıcı `/dashboard`'a yönlendiriliyor.
+
+---
+
+## Faz 9 — Multi-Model Consensus (MedGemma + Claude + LLaVA-Med + BioViL-T) ⏳
+
+**Durum:** Planlandı  
+**Amaç:** Aynı görüntüyü birden fazla modele paralel göndermek, her modelin differential diagnosis çıktısını birleştirerek daha güvenilir bir ortak karar üretmek
+
+---
+
+### Mimari Genel Bakış
+
+```
+Görüntü (Next.js API)
+    │
+    ├──► MedGemma 4b-it   (Modal A10G GPU)     → JSON: [{diagnosis, probability, evidence}]
+    ├──► LLaVA-Med 7B     (Modal A10G GPU)     → JSON: [{diagnosis, probability, evidence}]
+    ├──► BioViL-T          (Modal A10G GPU)     → JSON: [{diagnosis, probability, evidence}]
+    └──► Claude Sonnet 4.6 (Anthropic API)      → JSON: [{diagnosis, probability, evidence}]
+                │
+                ▼
+        Consensus Engine (Node.js)
+        - Tanıları eşleştir (fuzzy match)
+        - Ağırlıklı ortalama hesapla
+        - Anlaşma skoru hesapla (kaç model hemfikir?)
+                │
+                ▼
+        Frontend: model bazlı bar + consensus bar + anlaşma rozeti
+```
+
+---
+
+### 9.1 — Model Bilgileri
+
+#### MedGemma 4b-it (mevcut)
+- **HuggingFace:** `google/medgemma-4b-it`
+- **Güç:** Genel tıbbi görüntü (radyoloji, patoloji, dermatoloji)
+- **Çıktı:** Serbest metin → yapılandırılmış JSON'a çevrilecek
+- **Ağırlık:** `1.0` (referans model)
+
+#### LLaVA-Med 1.5 Mistral 7B
+- **HuggingFace:** `microsoft/llava-med-v1.5-mistral-7b`
+- **Güç:** Genel tıbbi VQA + görüntü açıklama, PubMed tıbbi literatürüyle eğitildi
+- **Çıktı:** Serbest metin → JSON'a çevrilecek
+- **Ağırlık:** `0.9`
+- **GPU ihtiyacı:** A10G (24GB VRAM) — MedGemma ile aynı tier
+
+#### BioViL-T
+- **HuggingFace:** `microsoft/BioViL-T`
+- **Güç:** Radyoloji raporlarından temporal değişim tespiti, chest X-ray odaklı
+- **Çıktı:** Classification logits → olasılıklara dönüştürülecek
+- **Ağırlık:** `0.8` (sadece akciğer grafisinde aktif, diğer modalitelerde devre dışı)
+- **Kısıt:** Radyoloji (chest X-ray) dışında kullanım önerilmez
+
+#### Claude Sonnet 4.6 (Anthropic API)
+- **Erişim:** `@anthropic-ai/sdk` via Anthropic API
+- **Güç:** Geniş tıp bilgisi, güçlü akıl yürütme, hızlı (soğuk start yok)
+- **Çıktı:** Yapılandırılmış JSON (prompt ile zorunlu kılınacak)
+- **Ağırlık:** `0.95`
+- **Maliyet:** ~$0.003/görüntü (input + output token)
+
+---
+
+### 9.2 — Backend Değişiklikleri (`backend/app.py`)
+
+#### Yeni Modal Container'lar
+
+```python
+# Her model kendi container'ında — bağımsız ölçeklenir
+@app.cls(image=image, gpu="A10G", ...)
+class LLaVAMedBackend:
+    @modal.enter()
+    def load_model(self):
+        # microsoft/llava-med-v1.5-mistral-7b
+
+@app.cls(image=image, gpu="A10G", ...)
+class BioViLBackend:
+    @modal.enter()
+    def load_model(self):
+        # microsoft/BioViL-T (chest X-ray sınıflandırma)
+```
+
+#### Structured Output — Her Model JSON Döndürecek
+
+```json
+{
+  "differentials": [
+    {"diagnosis": "Pneumonia", "probability": 65, "evidence": "..."},
+    {"diagnosis": "Atelectasis", "probability": 20, "evidence": "..."}
+  ],
+  "modality": "chest_xray",
+  "confidence": 0.82
+}
+```
+
+#### `/analyze-ensemble` Endpoint (yeni)
+
+```python
+@web.post("/analyze-ensemble")
+async def analyze_ensemble(req):
+    # Tüm modelleri PARALEL çalıştır
+    results = await asyncio.gather(
+        medgemma.analyze(req),
+        llava_med.analyze(req),
+        biovil.analyze(req),   # sadece chest X-ray
+    )
+    # Claude API çağrısı ayrıca (Anthropic SDK)
+    claude_result = await call_claude_api(req)
+
+    return consensus_engine(results + [claude_result])
+```
+
+---
+
+### 9.3 — Consensus Engine (Node.js / Next.js)
+
+**Dosya:** `web/lib/consensus.ts`
+
+#### Algoritma
+
+```
+1. Her modelden [{diagnosis, probability}] listesi alınır
+2. Tanılar normalize edilir (fuzzy match: "Pneumonia" = "Pnömoni" = "pneumonia")
+3. Her tanı için ağırlıklı ortalama:
+   weighted_prob = Σ(model_weight × probability) / Σ(model_weight)
+4. Anlaşma skoru: kaç model bu tanıyı top-3'e koydu?
+5. Final liste olasılığa göre sıralanır
+```
+
+#### Anlaşma Rozetleri
+
+| Skor | Rozet | Anlam |
+|---|---|---|
+| 4/4 model hemfikir | 🟢 Güçlü Konsensüs | Tüm modeller aynı tanıya yüksek olasılık veriyor |
+| 3/4 | 🟡 Orta Konsensüs | Çoğunluk hemfikir |
+| 2/4 | 🟠 Zayıf Konsensüs | Modeller ayrışıyor |
+| 1/4 | 🔴 Düşük Güven | Sadece bir model bu tanıyı öne çıkarıyor |
+
+---
+
+### 9.4 — Frontend Değişiklikleri
+
+#### Rapor Yorum Bölümü (yeni görünüm)
+
+```
+┌─ YORUM (Multi-Model Consensus) ──────────────────────┐
+│                                                        │
+│  Pnömoni                        %66 ■■■■■■■■■░░  🟢 4/4 │
+│  MedGemma: 65% │ Claude: 72% │ LLaVA-Med: 68% │ BioViL: 60%  │
+│                                                        │
+│  Atelektazi                     %19 ■■░░░░░░░░  🟡 3/4 │
+│  ...                                                   │
+└────────────────────────────────────────────────────────┘
+```
+
+- Her tanı için consensus bar (birleşik) + expandable model breakdown
+- Anlaşma rozeti (🟢/🟡/🟠/🔴)
+- "4 modelin 3'ü bu tanıda hemfikir" gibi açıklayıcı metin
+- Hangi model hangi olasılığı verdi (küçük detay satırı)
+
+---
+
+### 9.5 — Maliyet Analizi
+
+| Senaryo | GPU Süresi | API Maliyeti | Toplam/Analiz |
+|---|---|---|---|
+| Sadece MedGemma (mevcut) | ~25s A10G | $0 | ~$0.005 |
+| + Claude API | ~25s A10G | ~$0.003 | ~$0.008 |
+| + LLaVA-Med | ~50s 2×A10G (paralel) | $0 | ~$0.012 |
+| Tam ensemble (4 model) | ~50s 3×A10G (paralel) | ~$0.003 | ~$0.020 |
+
+> Paralel çalışma sayesinde 4 model süre olarak 1 model kadar uzun sürer — toplam latency artmaz, sadece maliyet artar.
+
+---
+
+### 9.6 — Yapılacaklar Listesi
+
+| Öncelik | Görev |
+|---|---|
+| 🔴 | `backend/llava_med.py` — LLaVA-Med Modal container |
+| 🔴 | `backend/biovil.py` — BioViL-T Modal container (chest X-ray) |
+| 🔴 | Claude API entegrasyonu — `@anthropic-ai/sdk` Next.js API route'ta |
+| 🔴 | Structured output prompt engineering — her model için JSON formatı |
+| 🔴 | `web/lib/consensus.ts` — ağırlıklı ortalama + anlaşma skoru |
+| 🔴 | `/api/analyze-ensemble` Next.js route — 4 modeli paralel çağır |
+| 🟡 | `report-view.tsx` — consensus UI (model breakdown expandable) |
+| 🟡 | Modality detection — BioViL-T'yi sadece chest X-ray'de etkinleştir |
+| 🟡 | Yeni env değişkenleri: `ANTHROPIC_API_KEY`, `LLAVA_MED_URL`, `BIOVIL_URL` |
+| 🟢 | Admin panelinde hangi modelin en çok kullanıldığı istatistiği |
+| 🟢 | Kullanıcıya "Analiz modları" seçeneği (Hızlı: 1 model / Kapsamlı: 4 model) |
+
+---
+
+### 9.7 — Yeni Ortam Değişkenleri
+
+```env
+# Anthropic (Claude)
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Modal — yeni container URL'leri (deploy sonrası alınacak)
+LLAVA_MED_URL=https://...modal.run
+BIOVIL_URL=https://...modal.run
+```
+
+---
+
+**Faz 9 Tamamlanma Kriteri:** Kullanıcı analiz yaptığında 4 modelin ortak kararı, anlaşma skoruyla birlikte gösterilir. Her modelin ayrı olasılıkları expandable panel ile görülebilir.
 
 ---
 
