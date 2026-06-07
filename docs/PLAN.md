@@ -266,15 +266,54 @@ Faz 7: Ücretlendirme        (Ücretsiz hak + Abonelik)    🔄 Kısmen uyguland
 
 ---
 
+## Faz 8 — Admin Paneli 🔄
+
+**Durum:** Altyapı + API + UI kodlandı, env değişkenleri ve navbar linki eksik  
+**Amaç:** Kayıtlı kullanıcıları, kullanımları ve geliri tek ekranda görmek
+
+### Tamamlananlar (kod yazıldı, deploy edilmedi)
+
+- [x] `web/lib/supabase/admin.ts` — service role client (RLS bypass)
+- [x] `web/app/api/admin/stats/route.ts` — kullanıcı istatistikleri API'si (sadece admin email)
+- [x] `web/app/(dashboard)/admin/page.tsx` — server component (auth check + data fetch)
+- [x] `web/app/(dashboard)/admin/admin-client.tsx` — interaktif tablo (arama, sıralama, quota bar)
+
+### Yapılacaklar (aktif etmek için)
+
+| Adım | Açıklama |
+|---|---|
+| 1 | Supabase Dashboard → Settings → API → **service_role key** al |
+| 2 | `.env.local`'e `SUPABASE_SERVICE_ROLE_KEY=<key>` ekle |
+| 3 | `.env.local`'e `ADMIN_EMAIL=ucindiloglu@gmail.com` ekle |
+| 4 | Vercel → Environment Variables'a da aynı iki değeri ekle |
+| 5 | `components/navbar.tsx` → admin linki ekle (opsiyonel, `/admin` URL'i de çalışır) |
+
+### Admin panel özellikleri
+
+- Toplam kullanıcı / analiz / sohbet özet kartları
+- E-posta ile kullanıcı arama
+- Sıralama: en yeni / en çok analiz / en çok sohbet
+- Her kullanıcıda analiz kotası progress bar (X/3)
+- Plan bilgisi (şimdilik hepsi "Ücretsiz")
+- Gelir sütunu → Stripe entegrasyonu sonrası eklenecek
+
+> **Güvenlik:** `/admin` sayfası ve `/api/admin/stats` endpoint'i server-side `ADMIN_EMAIL` kontrolü ile korunuyor. Yanlış kullanıcı `/dashboard`'a yönlendiriliyor.
+
+---
+
 ## Ortam Değişkenleri (`.env.local`)
 
 ```env
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://tzmzjudtbxifbiqwfkqs.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
+SUPABASE_SERVICE_ROLE_KEY=<Supabase Dashboard → Settings → API → service_role>  # Admin paneli için
 
 # Modal
 MODAL_API_URL=https://umutcindiloglu--medvision-ai-medgemmabackend-api.modal.run
+
+# Admin
+ADMIN_EMAIL=ucindiloglu@gmail.com  # Admin paneline erişebilecek e-posta
 ```
 
 ---
