@@ -193,6 +193,7 @@ const t = {
       err_session: 'Oturum süresi dolmuş.',
       err_quota: 'Ücretsiz 3 analiz hakkınız doldu. Abonelik sistemi yakında eklenecek.',
       success: 'Analiz tamamlandı!',
+      warming: 'Model hazırlanıyor... İlk istek biraz uzun sürebilir.',
     },
 
     // ── Sohbet ────────────────────────────────────────────
@@ -209,6 +210,7 @@ const t = {
       ],
       pdf_ready: 'Metin hazır ({n}k karakter)',
       pdf_reading: 'PDF okunuyor...',
+      warming: 'Model hazırlanıyor... İlk istek biraz uzun sürebilir.',
     },
 
     // ── Geçmiş ────────────────────────────────────────────
@@ -420,6 +422,7 @@ const t = {
       err_session: 'Session expired.',
       err_quota: 'You have used all 3 free analyses. Subscription system coming soon.',
       success: 'Analysis complete!',
+      warming: 'Model warming up... First request may take a moment.',
     },
 
     chat: {
@@ -435,6 +438,7 @@ const t = {
       ],
       pdf_ready: 'Text ready ({n}k characters)',
       pdf_reading: 'Reading PDF...',
+      warming: 'Model warming up... First request may take a moment.',
     },
 
     history: {

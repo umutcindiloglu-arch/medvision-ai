@@ -35,6 +35,7 @@ export default function AnalyzePage() {
   const [doctorNote, setDoctorNote] = useState('')
   const [step, setStep] = useState<Step>('idle')
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [warming, setWarming] = useState(true)
   const pdfInputRef = useRef<HTMLInputElement>(null)
 
   const isLoading = step !== 'idle'
@@ -49,7 +50,7 @@ export default function AnalyzePage() {
   }
 
   useEffect(() => {
-    fetch('/api/warmup').catch(() => {})
+    fetch('/api/warmup').finally(() => setWarming(false))
   }, [])
 
   const handleAdd = useCallback((newFiles: File[]) => {
@@ -176,6 +177,13 @@ export default function AnalyzePage() {
         <h1 className="text-2xl font-semibold text-slate-800">{AZ.title}</h1>
         <p className="text-slate-500 mt-1 text-sm">{AZ.desc}</p>
       </div>
+
+      {warming && (
+        <div className="mb-4 flex items-center gap-2.5 px-4 py-2.5 bg-sky-50 border border-sky-200 rounded-xl">
+          <div className="w-3.5 h-3.5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+          <p className="text-xs text-sky-700">{AZ.warming}</p>
+        </div>
+      )}
 
       <div className="mb-6 flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
         <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -31,11 +31,12 @@ export default function ChatPage() {
   const [attachment, setAttachment] = useState<{ file: File; preview: string; isPdf: boolean } | null>(null)
   const [pdfText, setPdfText] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [warming, setWarming] = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    fetch('/api/warmup').catch(() => {})
+    fetch('/api/warmup').finally(() => setWarming(false))
   }, [])
 
   useEffect(() => {
@@ -155,6 +156,13 @@ export default function ChatPage() {
         <h1 className="text-2xl font-semibold text-slate-800">{CH.title}</h1>
         <p className="text-slate-500 mt-1 text-sm">{CH.desc}</p>
       </div>
+
+      {warming && messages.length === 0 && (
+        <div className="mb-3 flex items-center gap-2.5 px-4 py-2.5 bg-sky-50 border border-sky-200 rounded-xl flex-shrink-0">
+          <div className="w-3.5 h-3.5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+          <p className="text-xs text-sky-700">{CH.warming}</p>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto space-y-3 pr-1 mb-4 min-h-0">
         {messages.length === 0 && (
