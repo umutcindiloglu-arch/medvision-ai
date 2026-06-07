@@ -1,0 +1,467 @@
+export type Lang = 'tr' | 'en'
+
+const t = {
+  tr: {
+    // ── Ortak ─────────────────────────────────────────────
+    common: {
+      loading: 'Yükleniyor...',
+      error: 'Hata oluştu.',
+      cancel: 'İptal',
+      save: 'Kaydet',
+      delete: 'Sil',
+      confirm_delete: 'Bu analizi silmek istediğinizden emin misiniz?',
+      view: 'Görüntüle',
+      back: 'Geri',
+      disclaimer: 'Bu sistem klinik karar desteği amaçlıdır. Tanı koymaz.',
+    },
+
+    // ── Navbar (dashboard) ─────────────────────────────────
+    nav: {
+      home: 'Anasayfa',
+      dashboard: 'Panel',
+      assistant: 'Asistan',
+      medgemma: 'MedGemma Nedir?',
+      history: 'Geçmiş',
+      sign_out: 'Çıkış',
+      login: 'Giriş Yap',
+      register: 'Ücretsiz Kayıt Ol →',
+      pricing: 'Fiyatlandırma',
+    },
+
+    // ── Landing ────────────────────────────────────────────
+    landing: {
+      badge: 'Google MedGemma destekli',
+      hero_title_1: 'Tıbbi görüntüde',
+      hero_title_2: 'akıllı analiz',
+      hero_title_3: ', saniyeler içinde.',
+      hero_desc: 'X-ray, MRI ve CT görüntülerinizi yapay zekaya yükleyin. Türkçe ve İngilizce detaylı rapor alın. Doktorlar için tasarlandı.',
+      cta_start: 'Ücretsiz Başla',
+      cta_login: 'Giriş Yap',
+      cta_dashboard: 'Panele Git →',
+      trust: 'Kredi kartı gerekmez · Tanı aracı değildir',
+      go_to_panel: 'Panele Git →',
+
+      // Scanner card
+      scanner_title: 'medvision_ai — analiz.exe',
+      scanner_normal: 'Normal Doku',
+      scanner_anomaly: 'Anomali',
+      scanner_ready: 'Rapor hazır',
+
+      // How it works
+      how_title: '3 adımda tıbbi görüntü analizi',
+      how_badge: 'Nasıl Çalışır?',
+      step1_title: 'Görüntü Yükle',
+      step1_desc: 'X-ray, MRI veya CT görüntülerinizi sürükleyip bırakın. JPEG, PNG ve DICOM (.dcm) desteklenir.',
+      step2_title: 'AI Analiz Eder',
+      step2_desc: 'MedGemma modeli görüntüyü saniyeler içinde tarar, anomalileri ve bulguları tespit eder.',
+      step3_title: 'Raporu Al',
+      step3_desc: 'Türkçe ve İngilizce detaylı rapor anında hazırlanır. Geçmiş analizlerinize her zaman erişin.',
+
+      // Features
+      features_badge: 'Özellikler',
+      features_title: 'Klinik iş akışına uygun tasarım',
+      feat1_title: 'Türkçe + İngilizce Rapor',
+      feat1_desc: 'Her analiz otomatik olarak iki dilde raporlanır. Uluslararası ekiplerle paylaşım kolaylaşır.',
+      feat2_title: 'Hızlı Analiz',
+      feat2_desc: 'MedGemma altyapısı sayesinde görüntü analizi genellikle 30 saniyenin altında tamamlanır.',
+      feat3_title: 'Sohbet ile Sorgula',
+      feat3_desc: 'Rapor hakkında sorularınızı yapay zekaya sorun. "Bu bulgu ne anlama geliyor?" gibi.',
+      feat4_title: 'Analiz Geçmişi',
+      feat4_desc: 'Tüm analizleriniz güvenli şekilde saklanır. Geçmiş raporlarınıza istediğiniz zaman ulaşın.',
+      feat5_title: 'Güvenli Altyapı',
+      feat5_desc: 'Supabase + RLS ile verileriniz yalnızca size görünür. HTTPS şifrelemesi zorunludur.',
+      feat6_title: 'Çoklu Format',
+      feat6_desc: 'Tek seferde birden fazla görüntü yükleyin veya PDF belge, laboratuvar sonucu gönderin.',
+
+      // MedGemma section
+      medgemma_badge: 'Teknoloji',
+      medgemma_title: 'MedGemma nedir?',
+      medgemma_desc1: 'MedGemma, Google DeepMind tarafından geliştirilen ve tıbbi görüntü analizi, patoloji ve klinik NLP alanlarında özelleştirilmiş açık kaynak bir yapay zeka modelidir.',
+      medgemma_desc2: 'Radyoloji görüntülerini yorumlamak, tıbbi metinleri anlamlandırmak ve çok dilli klinik raporlama için tasarlanmıştır. MedVision AI bu modeli doktora özel bir arayüzle sunar.',
+      medgemma_badge1: 'Google DeepMind',
+      medgemma_badge2: 'Radyoloji',
+      medgemma_badge3: 'Patoloji',
+      medgemma_badge4: 'Klinik NLP',
+
+      // CTA banner
+      cta_banner_title: 'Hemen başlayın, ücretsiz.',
+      cta_banner_desc: 'İlk 3 analiziniz tamamen ücretsiz. Kredi kartı gerekmez.',
+      cta_banner_btn1: 'Ücretsiz Kayıt Ol',
+      cta_banner_btn2: 'Giriş Yap',
+
+      // Footer
+      footer_disclaimer: 'Bu sistem klinik karar desteği amaçlıdır. Tanı koymaz. Tıbbi kararlarınız için uzman hekiminize danışın.',
+      footer_version: 'v1.0 · Google MedGemma 4B IT',
+    },
+
+    // ── Fiyatlandırma ──────────────────────────────────────
+    pricing: {
+      badge: 'Fiyatlandırma',
+      title: 'İhtiyacınıza uygun plan',
+      subtitle: 'Her plan aboneliksiz başlar. İlk 3 analiz tüm kullanıcılara ücretsiz.',
+      monthly: '/ay',
+      analyses: 'analiz/ay',
+      free_label: 'Ücretsiz',
+      contact: 'İletişime Geçin',
+      popular: 'Popüler',
+      cta_start: 'Ücretsiz Başla',
+      cta_contact: 'Bize Ulaşın',
+      cta_choose: 'Başla',
+      note: '* Abonelik sistemi yakında devreye girecek. Şimdilik tüm özellikler erişilebilir.',
+
+      plan_free_name: 'Free',
+      plan_free_analyses: '3 analiz',
+      plan_free_desc: 'Deneme için',
+      plan_free_features: ['3 analiz hakkı', 'Türkçe + İngilizce rapor', 'PDF ve DICOM desteği', 'Tıbbi asistan sohbeti'],
+
+      plan_starter_name: 'Starter',
+      plan_starter_desc: 'Bireysel kullanım',
+      plan_starter_features: ['30 analiz/ay', 'Türkçe + İngilizce rapor', 'PDF ve DICOM desteği', 'Tıbbi asistan sohbeti', 'Analiz geçmişi'],
+
+      plan_pro_name: 'Professional',
+      plan_pro_desc: 'Yoğun klinik kullanım',
+      plan_pro_features: ['100 analiz/ay', 'Türkçe + İngilizce rapor', 'PDF ve DICOM desteği', 'Tıbbi asistan sohbeti', 'Analiz geçmişi', 'Öncelikli destek'],
+
+      plan_enterprise_name: 'Enterprise',
+      plan_enterprise_desc: 'Klinik / hastane',
+      plan_enterprise_features: ['300 analiz/ay', 'Türkçe + İngilizce rapor', 'PDF ve DICOM desteği', 'Tıbbi asistan sohbeti', 'Analiz geçmişi', 'Öncelikli destek', 'Özel entegrasyon'],
+
+      plan_custom_name: 'Kurumsal',
+      plan_custom_desc: '300+ analiz / büyük ekipler',
+      plan_custom_features: ['Sınırsız analiz', 'Özel API erişimi', 'SLA garantisi', 'Özel kurulum & destek', 'KVKK / HIPAA uyumu'],
+    },
+
+    // ── Auth ───────────────────────────────────────────────
+    auth: {
+      login_title: 'Giriş Yap',
+      register_title: 'Hesap Oluştur',
+      email: 'E-posta',
+      password: 'Şifre',
+      password_confirm: 'Şifre Tekrar',
+      email_placeholder: 'doktor@hastane.com',
+      password_placeholder: 'En az 8 karakter',
+      login_btn: 'Giriş Yap',
+      login_loading: 'Giriş yapılıyor...',
+      register_btn: 'Kayıt Ol',
+      register_loading: 'Kayıt oluşturuluyor...',
+      no_account: 'Hesabınız yok mu?',
+      has_account: 'Zaten hesabınız var mı?',
+      register_link: 'Kayıt Ol',
+      login_link: 'Giriş Yap',
+      success_registered: 'Hesabınız oluşturuldu. Giriş yapabilirsiniz.',
+      error_credentials: 'E-posta veya şifre hatalı.',
+      error_generic: 'Giriş yapılamadı. Lütfen tekrar deneyin.',
+      error_already_registered: 'Bu e-posta adresi zaten kayıtlı.',
+      error_register_generic: 'Kayıt olunamadı. Lütfen tekrar deneyin.',
+      error_password_mismatch: 'Şifreler eşleşmiyor.',
+      error_password_short: 'Şifre en az 8 karakter olmalıdır.',
+      platform_name: 'Tıbbi Görüntü Analiz Platformu',
+    },
+
+    // ── Dashboard ─────────────────────────────────────────
+    dashboard: {
+      hero_desc: 'Tıbbi görüntülerinizi MedGemma yapay zekasıyla analiz edin. Saniyeler içinde Türkçe ve İngilizce rapor alın.',
+      new_analysis: 'Yeni Analiz Başlat',
+      recent: 'Son Analizler',
+      no_analyses: 'Henüz analiz yapılmadı.',
+      no_analyses_hint: 'Yukarıdaki butona tıklayarak ilk analizinizi başlatın.',
+    },
+
+    // ── Analiz ────────────────────────────────────────────
+    analyze: {
+      title: 'Yeni Analiz',
+      desc: 'Tıbbi görüntü, PDF belge veya laboratuvar sonuçlarınızı yükleyin — MedGemma analiz etsin.',
+      images_label: 'Tıbbi Görüntüler',
+      images_optional: '(opsiyonel)',
+      images_hint: 'X-ray, MRI, CT — JPG, PNG, DICOM. En fazla 5 görüntü.',
+      pdf_label: 'PDF Belgeler',
+      pdf_hint: 'Kan tahlili, doktor raporu, epikriz vb. PDF dosyaları.',
+      pdf_add: 'PDF Ekle',
+      pdf_reading: 'PDF okunuyor...',
+      note_label: 'Klinisyen Notu veya Laboratuvar Sonuçları',
+      note_placeholder: 'Örn: 65 yaşında erkek hasta...\nVeya laboratuvar sonuçlarını yapıştırın: HGB: 9.2 g/dL, WBC: 14.3 ×10³/μL...',
+      submit: 'Analiz Et',
+      submit_multi: 'Analiz Et ({n} görüntü)',
+      submitting: 'Analiz ediliyor...',
+      disclaimer_title: 'Tıbbi Sorumluluk Reddi:',
+      disclaimer_text: 'Bu sistem yalnızca araştırma ve destek amaçlıdır. Üretilen raporlar tıbbi teşhis yerine geçmez.',
+      uploading: 'Görüntüler yükleniyor...',
+      extracting: 'PDF metni okunuyor...',
+      analyzing: 'MedGemma analiz ediyor... (15-20 saniye sürebilir)',
+      saving: 'Rapor kaydediliyor...',
+      err_no_content: 'Görüntü, PDF veya not ekleyin.',
+      err_session: 'Oturum süresi dolmuş.',
+      success: 'Analiz tamamlandı!',
+    },
+
+    // ── Sohbet ────────────────────────────────────────────
+    chat: {
+      title: 'Tıbbi Asistan',
+      desc: 'Tıbbi sorularınızı sorun, görüntü veya PDF belge ekleyin.',
+      empty_title: 'MedGemma Tıbbi Asistan',
+      empty_desc: 'Tıbbi sorular, görüntü analizi, kan tahlili yorumu ve daha fazlası için buradayım.',
+      placeholder: 'Tıbbi soru sorun veya lab sonuçlarını yapıştırın...',
+      suggestions: [
+        'HGB 9.2, WBC 14.3, PLT 420 — bu sonuçları yorumlar mısın?',
+        'Pnömoni ile bronşit arasındaki farkı açıkla.',
+        'Metformin ile nelere dikkat etmeliyim?',
+      ],
+      pdf_ready: 'Metin hazır ({n}k karakter)',
+      pdf_reading: 'PDF okunuyor...',
+    },
+
+    // ── Geçmiş ────────────────────────────────────────────
+    history: {
+      title: 'Analiz Geçmişi',
+      new_btn: 'Yeni Analiz',
+      search_placeholder: 'Dosya adı, not veya rapor içinde ara...',
+      empty_search: 'Arama kriterine uyan analiz bulunamadı.',
+      empty: 'Henüz analiz yapılmadı.',
+      rename: 'Yeniden adlandır',
+      view: 'Görüntüle',
+      delete: 'Sil',
+      toast_renamed: 'İsim güncellendi.',
+      toast_rename_err: 'İsim güncellenemedi.',
+      toast_deleted: 'Analiz silindi.',
+      toast_delete_err: 'Analiz silinemedi.',
+      image_default: 'Tıbbi Görüntü',
+    },
+
+    // ── MedGemma sayfası ──────────────────────────────────
+    medgemma_page: {
+      title: 'MedGemma Nedir?',
+    },
+
+    // ── 404 ───────────────────────────────────────────────
+    not_found: {
+      title: 'Sayfa Bulunamadı',
+      desc: 'Aradığınız sayfa mevcut değil veya taşınmış olabilir.',
+      btn: 'Panele Dön',
+    },
+  },
+
+  en: {
+    common: {
+      loading: 'Loading...',
+      error: 'An error occurred.',
+      cancel: 'Cancel',
+      save: 'Save',
+      delete: 'Delete',
+      confirm_delete: 'Are you sure you want to delete this analysis?',
+      view: 'View',
+      back: 'Back',
+      disclaimer: 'This system is for clinical decision support only. It does not provide diagnoses.',
+    },
+
+    nav: {
+      home: 'Home',
+      dashboard: 'Dashboard',
+      assistant: 'Assistant',
+      medgemma: 'What is MedGemma?',
+      history: 'History',
+      sign_out: 'Sign Out',
+      login: 'Sign In',
+      register: 'Start Free →',
+      pricing: 'Pricing',
+    },
+
+    landing: {
+      badge: 'Powered by Google MedGemma',
+      hero_title_1: 'Intelligent analysis',
+      hero_title_2: 'of medical images',
+      hero_title_3: ', in seconds.',
+      hero_desc: 'Upload your X-ray, MRI and CT scans to AI. Get detailed reports in Turkish and English. Designed for doctors.',
+      cta_start: 'Start for Free',
+      cta_login: 'Sign In',
+      cta_dashboard: 'Go to Dashboard →',
+      trust: 'No credit card required · Not a diagnostic tool',
+      go_to_panel: 'Go to Dashboard →',
+
+      scanner_title: 'medvision_ai — analysis.exe',
+      scanner_normal: 'Normal Tissue',
+      scanner_anomaly: 'Anomaly',
+      scanner_ready: 'Report ready',
+
+      how_badge: 'How It Works',
+      how_title: 'Medical image analysis in 3 steps',
+      step1_title: 'Upload Image',
+      step1_desc: 'Drag and drop your X-ray, MRI or CT scans. JPEG, PNG and DICOM (.dcm) are supported.',
+      step2_title: 'AI Analyzes',
+      step2_desc: 'The MedGemma model scans the image in seconds, detecting anomalies and findings.',
+      step3_title: 'Receive Report',
+      step3_desc: 'A detailed report in Turkish and English is generated instantly. Access past analyses anytime.',
+
+      features_badge: 'Features',
+      features_title: 'Designed for clinical workflows',
+      feat1_title: 'Turkish + English Reports',
+      feat1_desc: 'Every analysis is automatically reported in two languages. Easy to share with international teams.',
+      feat2_title: 'Fast Analysis',
+      feat2_desc: 'Powered by MedGemma, image analysis typically completes in under 30 seconds.',
+      feat3_title: 'Chat & Query',
+      feat3_desc: 'Ask the AI questions about the report. "What does this finding mean?" and more.',
+      feat4_title: 'Analysis History',
+      feat4_desc: 'All your analyses are stored securely. Access past reports whenever you need.',
+      feat5_title: 'Secure Infrastructure',
+      feat5_desc: 'Your data is visible only to you via Supabase + RLS. HTTPS encryption is enforced.',
+      feat6_title: 'Multi-Format',
+      feat6_desc: 'Upload multiple images at once, or send PDF documents and lab results.',
+
+      medgemma_badge: 'Technology',
+      medgemma_title: 'What is MedGemma?',
+      medgemma_desc1: 'MedGemma is an open-source AI model developed by Google DeepMind, specialized in medical image analysis, pathology, and clinical NLP.',
+      medgemma_desc2: 'It is designed to interpret radiology images, understand medical texts, and generate multilingual clinical reports. MedVision AI presents this model through a physician-oriented interface.',
+      medgemma_badge1: 'Google DeepMind',
+      medgemma_badge2: 'Radiology',
+      medgemma_badge3: 'Pathology',
+      medgemma_badge4: 'Clinical NLP',
+
+      cta_banner_title: 'Get started today, for free.',
+      cta_banner_desc: 'Your first 3 analyses are completely free. No credit card required.',
+      cta_banner_btn1: 'Sign Up Free',
+      cta_banner_btn2: 'Sign In',
+
+      footer_disclaimer: 'This system is for clinical decision support only. It does not provide diagnoses. Consult your physician for medical decisions.',
+      footer_version: 'v1.0 · Google MedGemma 4B IT',
+    },
+
+    pricing: {
+      badge: 'Pricing',
+      title: 'The right plan for your needs',
+      subtitle: 'No subscription to start. First 3 analyses are free for all users.',
+      monthly: '/mo',
+      analyses: 'analyses/mo',
+      free_label: 'Free',
+      contact: 'Contact Us',
+      popular: 'Popular',
+      cta_start: 'Start Free',
+      cta_contact: 'Contact Us',
+      cta_choose: 'Get Started',
+      note: '* Subscription system coming soon. All features are accessible for now.',
+
+      plan_free_name: 'Free',
+      plan_free_analyses: '3 analyses',
+      plan_free_desc: 'Try it out',
+      plan_free_features: ['3 analyses', 'Turkish + English report', 'PDF & DICOM support', 'Medical assistant chat'],
+
+      plan_starter_name: 'Starter',
+      plan_starter_desc: 'Individual use',
+      plan_starter_features: ['30 analyses/mo', 'Turkish + English report', 'PDF & DICOM support', 'Medical assistant chat', 'Analysis history'],
+
+      plan_pro_name: 'Professional',
+      plan_pro_desc: 'Intensive clinical use',
+      plan_pro_features: ['100 analyses/mo', 'Turkish + English report', 'PDF & DICOM support', 'Medical assistant chat', 'Analysis history', 'Priority support'],
+
+      plan_enterprise_name: 'Enterprise',
+      plan_enterprise_desc: 'Clinic / hospital',
+      plan_enterprise_features: ['300 analyses/mo', 'Turkish + English report', 'PDF & DICOM support', 'Medical assistant chat', 'Analysis history', 'Priority support', 'Custom integration'],
+
+      plan_custom_name: 'Custom',
+      plan_custom_desc: '300+ analyses / large teams',
+      plan_custom_features: ['Unlimited analyses', 'Custom API access', 'SLA guarantee', 'Dedicated setup & support', 'HIPAA / GDPR compliance'],
+    },
+
+    auth: {
+      login_title: 'Sign In',
+      register_title: 'Create Account',
+      email: 'Email',
+      password: 'Password',
+      password_confirm: 'Confirm Password',
+      email_placeholder: 'doctor@hospital.com',
+      password_placeholder: 'At least 8 characters',
+      login_btn: 'Sign In',
+      login_loading: 'Signing in...',
+      register_btn: 'Register',
+      register_loading: 'Creating account...',
+      no_account: "Don't have an account?",
+      has_account: 'Already have an account?',
+      register_link: 'Register',
+      login_link: 'Sign In',
+      success_registered: 'Account created. You can now sign in.',
+      error_credentials: 'Invalid email or password.',
+      error_generic: 'Sign in failed. Please try again.',
+      error_already_registered: 'This email address is already registered.',
+      error_register_generic: 'Registration failed. Please try again.',
+      error_password_mismatch: 'Passwords do not match.',
+      error_password_short: 'Password must be at least 8 characters.',
+      platform_name: 'Medical Image Analysis Platform',
+    },
+
+    dashboard: {
+      hero_desc: 'Analyze your medical images with MedGemma AI. Get Turkish and English reports in seconds.',
+      new_analysis: 'Start New Analysis',
+      recent: 'Recent Analyses',
+      no_analyses: 'No analyses yet.',
+      no_analyses_hint: 'Click the button above to start your first analysis.',
+    },
+
+    analyze: {
+      title: 'New Analysis',
+      desc: 'Upload medical images, PDF documents or lab results — let MedGemma analyze them.',
+      images_label: 'Medical Images',
+      images_optional: '(optional)',
+      images_hint: 'X-ray, MRI, CT — JPG, PNG, DICOM. Up to 5 images.',
+      pdf_label: 'PDF Documents',
+      pdf_hint: 'Blood tests, doctor reports, discharge summaries, etc.',
+      pdf_add: 'Add PDF',
+      pdf_reading: 'Reading PDF...',
+      note_label: 'Clinician Note or Lab Results',
+      note_placeholder: 'E.g.: 65-year-old male patient presenting with cough...\nOr paste lab values: HGB: 9.2 g/dL, WBC: 14.3 ×10³/μL...',
+      submit: 'Analyze',
+      submit_multi: 'Analyze ({n} images)',
+      submitting: 'Analyzing...',
+      disclaimer_title: 'Medical Disclaimer:',
+      disclaimer_text: 'This system is for research and support only. Generated reports do not replace medical diagnosis.',
+      uploading: 'Uploading images...',
+      extracting: 'Extracting PDF text...',
+      analyzing: 'MedGemma is analyzing... (may take 15–20 seconds)',
+      saving: 'Saving report...',
+      err_no_content: 'Add an image, PDF, or note.',
+      err_session: 'Session expired.',
+      success: 'Analysis complete!',
+    },
+
+    chat: {
+      title: 'Medical Assistant',
+      desc: 'Ask medical questions, attach images or PDF documents.',
+      empty_title: 'MedGemma Medical Assistant',
+      empty_desc: "I'm here for medical questions, image analysis, lab result interpretation, and more.",
+      placeholder: 'Ask a medical question or paste lab results...',
+      suggestions: [
+        'HGB 9.2, WBC 14.3, PLT 420 — can you interpret these results?',
+        'Explain the difference between pneumonia and bronchitis.',
+        'What should I watch out for with metformin?',
+      ],
+      pdf_ready: 'Text ready ({n}k characters)',
+      pdf_reading: 'Reading PDF...',
+    },
+
+    history: {
+      title: 'Analysis History',
+      new_btn: 'New Analysis',
+      search_placeholder: 'Search in file name, note or report...',
+      empty_search: 'No analyses match your search.',
+      empty: 'No analyses yet.',
+      rename: 'Rename',
+      view: 'View',
+      delete: 'Delete',
+      toast_renamed: 'Name updated.',
+      toast_rename_err: 'Could not update name.',
+      toast_deleted: 'Analysis deleted.',
+      toast_delete_err: 'Could not delete analysis.',
+      image_default: 'Medical Image',
+    },
+
+    medgemma_page: {
+      title: 'What is MedGemma?',
+    },
+
+    not_found: {
+      title: 'Page Not Found',
+      desc: 'The page you are looking for does not exist or has been moved.',
+      btn: 'Back to Dashboard',
+    },
+  },
+} as const
+
+export default t
+export type Translations = typeof t.tr

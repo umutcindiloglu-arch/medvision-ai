@@ -7,16 +7,9 @@ import { MultiImageDropzone } from '@/components/multi-image-dropzone'
 import { uploadMedicalImage } from '@/lib/supabase/storage'
 import { createClient } from '@/lib/supabase/client'
 import { readJson, readError } from '@/lib/api'
+import { useTranslation } from '@/lib/i18n/context'
 
 type Step = 'idle' | 'uploading' | 'extracting' | 'analyzing' | 'saving'
-
-const STEP_LABELS: Record<Step, string> = {
-  idle: '',
-  uploading: 'Görüntüler yükleniyor...',
-  extracting: 'PDF metni okunuyor...',
-  analyzing: 'MedGemma analiz ediyor... (15-20 saniye sürebilir)',
-  saving: 'Rapor kaydediliyor...',
-}
 
 interface PdfDoc {
   name: string
@@ -34,6 +27,8 @@ function toBase64(file: File): Promise<string> {
 
 export default function AnalyzePage() {
   const router = useRouter()
+  const { T } = useTranslation()
+  const AZ = T.analyze
   const [files, setFiles] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
   const [pdfDocs, setPdfDocs] = useState<PdfDoc[]>([])
@@ -44,6 +39,14 @@ export default function AnalyzePage() {
 
   const isLoading = step !== 'idle'
   const hasContent = files.length > 0 || pdfDocs.length > 0 || doctorNote.trim().length > 0
+
+  const stepLabel: Record<Step, string> = {
+    idle: '',
+    uploading: AZ.uploading,
+    extracting: AZ.extracting,
+    analyzing: AZ.analyzing,
+    saving: AZ.saving,
+  }
 
   useEffect(() => {
     fetch('/api/warmup').catch(() => {})
@@ -75,13 +78,13 @@ export default function AnalyzePage() {
         const res = await fetch('/api/extract-pdf', { method: 'POST', body: formData })
         if (!res.ok) {
           const { error } = await res.json()
-          toast.error(error ?? 'PDF okunamadı.')
+          toast.error(error ?? AZ.err_no_content)
           continue
         }
         const { text } = await res.json()
         setPdfDocs((prev) => [...prev, { name: file.name, text }])
       } catch {
-        toast.error(`${file.name} okunamadı.`)
+        toast.error(`${file.name}`)
       }
     }
     setPdfLoading(false)
@@ -94,7 +97,7 @@ export default function AnalyzePage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!hasContent) {
-      toast.error('Görüntü, PDF veya not ekleyin.')
+      toast.error(AZ.err_no_content)
       return
     }
 
@@ -102,27 +105,24 @@ export default function AnalyzePage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        toast.error('Oturum süresi dolmuş.')
+        toast.error(AZ.err_session)
         router.push('/login')
         return
       }
 
-      // 1. Görüntüleri Storage'a yükle (varsa)
       let paths: string[] = []
       if (files.length > 0) {
         setStep('uploading')
         for (const file of files) {
           const { path, error } = await uploadMedicalImage(file, user.id)
-          if (error) throw new Error(`Yükleme hatası: ${error}`)
+          if (error) throw new Error(`${AZ.uploading}: ${error}`)
           paths.push(path)
         }
       }
 
-      // 2. PDF metinlerini doctor_note'a ekle
       const pdfText = pdfDocs.map((d) => `[${d.name}]\n${d.text}`).join('\n\n---\n\n')
       const combinedNote = [pdfText, doctorNote.trim()].filter(Boolean).join('\n\n')
 
-      // 3. Modal'a gönder
       setStep('analyzing')
       const imagesB64 = await Promise.all(files.map(toBase64))
 
@@ -135,18 +135,17 @@ export default function AnalyzePage() {
         }),
       })
 
-      if (!res.ok) throw new Error(await readError(res, 'Analiz başarısız.'))
+      if (!res.ok) throw new Error(await readError(res, T.common.error))
 
       const { report_en, report_tr } = await readJson<{ report_en: string; report_tr: string }>(res)
 
-      // 4. DB'ye kaydet
       setStep('saving')
       const imageUrl = paths.length > 1 ? JSON.stringify(paths) : (paths[0] ?? '')
       const imageName = files.length > 0
         ? files.map((f) => f.name).join(', ')
         : pdfDocs.length > 0
           ? pdfDocs.map((d) => d.name).join(', ')
-          : 'Metin analizi'
+          : AZ.title
 
       const { data: analysis, error: dbError } = await supabase
         .from('analyses')
@@ -161,12 +160,12 @@ export default function AnalyzePage() {
         .select('id')
         .single()
 
-      if (dbError) throw new Error(`Kayıt hatası: ${dbError.message}`)
+      if (dbError) throw new Error(dbError.message)
 
-      toast.success('Analiz tamamlandı!')
+      toast.success(AZ.success)
       router.push(`/analysis/${analysis.id}`)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Beklenmeyen hata.')
+      toast.error(err instanceof Error ? err.message : T.common.error)
       setStep('idle')
     }
   }
@@ -174,11 +173,8 @@ export default function AnalyzePage() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-slate-800">Yeni Analiz</h1>
-        <p className="text-slate-500 mt-1 text-sm">
-          Tıbbi görüntü, PDF belge veya laboratuvar sonuçlarınızı yükleyin — MedGemma analiz etsin.
-          JPEG, PNG, DICOM (.dcm) ve PDF desteklenir.
-        </p>
+        <h1 className="text-2xl font-semibold text-slate-800">{AZ.title}</h1>
+        <p className="text-slate-500 mt-1 text-sm">{AZ.desc}</p>
       </div>
 
       <div className="mb-6 flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
@@ -187,20 +183,18 @@ export default function AnalyzePage() {
             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
         <p className="text-xs text-amber-700 leading-relaxed">
-          <strong>Tıbbi Sorumluluk Reddi:</strong> Bu sistem yalnızca araştırma ve destek amaçlıdır.
-          Üretilen raporlar tıbbi teşhis yerine geçmez.
+          <strong>{AZ.disclaimer_title}</strong> {AZ.disclaimer_text}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
-        {/* Görüntüler — opsiyonel */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Tıbbi Görüntüler
-            <span className="ml-1 text-slate-400 font-normal">(opsiyonel)</span>
+            {AZ.images_label}
+            <span className="ml-1 text-slate-400 font-normal">{AZ.images_optional}</span>
           </label>
-          <p className="text-xs text-slate-400 mb-2">X-ray, MRI, CT — JPG, PNG, DICOM. En fazla 5 görüntü.</p>
+          <p className="text-xs text-slate-400 mb-2">{AZ.images_hint}</p>
           <MultiImageDropzone
             files={files}
             previews={previews}
@@ -210,13 +204,12 @@ export default function AnalyzePage() {
           />
         </div>
 
-        {/* PDF Belgeler — opsiyonel */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            PDF Belgeler
-            <span className="ml-1 text-slate-400 font-normal">(opsiyonel)</span>
+            {AZ.pdf_label}
+            <span className="ml-1 text-slate-400 font-normal">{AZ.images_optional}</span>
           </label>
-          <p className="text-xs text-slate-400 mb-2">Kan tahlili, doktor raporu, epikriz vb. PDF dosyaları.</p>
+          <p className="text-xs text-slate-400 mb-2">{AZ.pdf_hint}</p>
 
           <input
             ref={pdfInputRef}
@@ -236,7 +229,7 @@ export default function AnalyzePage() {
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   <span className="text-xs text-slate-700 flex-1 truncate">{doc.name}</span>
-                  <span className="text-xs text-slate-400">{(doc.text.length / 1000).toFixed(1)}k karakter</span>
+                  <span className="text-xs text-slate-400">{(doc.text.length / 1000).toFixed(1)}k</span>
                   <button
                     type="button"
                     onClick={() => removePdf(i)}
@@ -262,7 +255,7 @@ export default function AnalyzePage() {
             {pdfLoading ? (
               <>
                 <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                PDF okunuyor...
+                {AZ.pdf_reading}
               </>
             ) : (
               <>
@@ -270,17 +263,16 @@ export default function AnalyzePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                     d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                PDF Ekle
+                {AZ.pdf_add}
               </>
             )}
           </button>
         </div>
 
-        {/* Klinisyen Notu */}
         <div>
           <label htmlFor="doctorNote" className="block text-sm font-medium text-slate-700 mb-1">
-            Klinisyen Notu veya Laboratuvar Sonuçları
-            <span className="ml-1 text-slate-400 font-normal">(opsiyonel)</span>
+            {AZ.note_label}
+            <span className="ml-1 text-slate-400 font-normal">{AZ.images_optional}</span>
           </label>
           <textarea
             id="doctorNote"
@@ -288,8 +280,7 @@ export default function AnalyzePage() {
             onChange={(e) => setDoctorNote(e.target.value)}
             disabled={isLoading}
             rows={4}
-            placeholder="Örn: 65 yaşında erkek hasta, öksürük şikayetiyle başvurdu...
-Veya doğrudan laboratuvar sonuçlarını yapıştırın: HGB: 9.2 g/dL, WBC: 14.3 ×10³/μL..."
+            placeholder={AZ.note_placeholder}
             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder-slate-400
               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
               disabled:opacity-60 disabled:cursor-not-allowed resize-none transition"
@@ -299,7 +290,7 @@ Veya doğrudan laboratuvar sonuçlarını yapıştırın: HGB: 9.2 g/dL, WBC: 14
         {isLoading && (
           <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
             <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
-            <p className="text-sm text-blue-700 font-medium">{STEP_LABELS[step]}</p>
+            <p className="text-sm text-blue-700 font-medium">{stepLabel[step]}</p>
           </div>
         )}
 
@@ -310,10 +301,10 @@ Veya doğrudan laboratuvar sonuçlarını yapıştırın: HGB: 9.2 g/dL, WBC: 14
             text-white font-medium rounded-xl transition-colors text-sm"
         >
           {isLoading
-            ? 'Analiz ediliyor...'
+            ? AZ.submitting
             : files.length > 1
-              ? `Analiz Et (${files.length} görüntü)`
-              : 'Analiz Et'}
+              ? AZ.submit_multi.replace('{n}', String(files.length))
+              : AZ.submit}
         </button>
       </form>
     </div>

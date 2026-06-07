@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { readJson, readError } from '@/lib/api'
 import { isDicom, dicomToImageFile } from '@/lib/dicom'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -22,6 +23,8 @@ function toBase64(file: File): Promise<string> {
 }
 
 export default function ChatPage() {
+  const { T } = useTranslation()
+  const CH = T.chat
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -44,7 +47,7 @@ export default function ChatPage() {
     if (!file) return
 
     if (file.size > 50 * 1024 * 1024) {
-      toast.error('Dosya 50MB\'den büyük olamaz.')
+      toast.error(T.common.error)
       return
     }
 
@@ -55,11 +58,11 @@ export default function ChatPage() {
         const formData = new FormData()
         formData.append('file', file)
         const res = await fetch('/api/extract-pdf', { method: 'POST', body: formData })
-        if (!res.ok) { toast.error('PDF okunamadı.'); setAttachment(null); return }
+        if (!res.ok) { toast.error(T.common.error); setAttachment(null); return }
         const { text } = await res.json()
         setPdfText(text)
       } catch {
-        toast.error('PDF okunamadı.')
+        toast.error(T.common.error)
         setAttachment(null)
       }
       return
@@ -70,7 +73,7 @@ export default function ChatPage() {
       try {
         processedFile = await dicomToImageFile(file)
       } catch {
-        toast.error('DICOM dönüştürülemedi.')
+        toast.error(T.common.error)
         return
       }
     }
@@ -112,10 +115,9 @@ export default function ChatPage() {
 
       if (currentAttachment) {
         if (currentAttachment.isPdf && currentPdfText) {
-          // PDF → metin olarak modele gönder, base64 yok
           messageText = text
-            ? `${text}\n\n[PDF Belgesi: ${currentAttachment.file.name}]\n${currentPdfText}`
-            : `[PDF Belgesi: ${currentAttachment.file.name}]\n${currentPdfText}`
+            ? `${text}\n\n[${currentAttachment.file.name}]\n${currentPdfText}`
+            : `[${currentAttachment.file.name}]\n${currentPdfText}`
         } else {
           attachmentB64 = await toBase64(currentAttachment.file)
         }
@@ -132,12 +134,12 @@ export default function ChatPage() {
         body: JSON.stringify({ messages: history, attachment_b64: attachmentB64 }),
       })
 
-      if (!res.ok) throw new Error(await readError(res, 'Yanıt alınamadı.'))
+      if (!res.ok) throw new Error(await readError(res, T.common.error))
 
       const { reply } = await readJson<{ reply: string }>(res)
       setMessages((prev) => [...prev, { role: 'assistant', content: reply }])
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Hata oluştu.')
+      toast.error(err instanceof Error ? err.message : T.common.error)
       setMessages((prev) => prev.filter((m) => m !== userMsg))
     } finally {
       setLoading(false)
@@ -148,13 +150,10 @@ export default function ChatPage() {
   return (
     <div className="max-w-2xl mx-auto flex flex-col" style={{ height: 'calc(100vh - 120px)' }}>
       <div className="mb-4 flex-shrink-0">
-        <h1 className="text-2xl font-semibold text-slate-800">Tıbbi Asistan</h1>
-        <p className="text-slate-500 mt-1 text-sm">
-          Tıbbi sorularınızı sorun, görüntü veya PDF belge ekleyin. Laboratuvar sonuçlarınızı yapıştırarak yorum isteyin.
-        </p>
+        <h1 className="text-2xl font-semibold text-slate-800">{CH.title}</h1>
+        <p className="text-slate-500 mt-1 text-sm">{CH.desc}</p>
       </div>
 
-      {/* Mesaj listesi */}
       <div className="flex-1 overflow-y-auto space-y-3 pr-1 mb-4 min-h-0">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-12">
@@ -165,17 +164,11 @@ export default function ChatPage() {
               </svg>
             </div>
             <div>
-              <p className="font-medium text-slate-700">MedGemma Tıbbi Asistan</p>
-              <p className="text-sm text-slate-400 mt-1 max-w-xs">
-                Tıbbi sorular, görüntü analizi, kan tahlili yorumu ve daha fazlası için buradayım.
-              </p>
+              <p className="font-medium text-slate-700">{CH.empty_title}</p>
+              <p className="text-sm text-slate-400 mt-1 max-w-xs">{CH.empty_desc}</p>
             </div>
             <div className="grid grid-cols-1 gap-2 w-full max-w-sm">
-              {[
-                'HGB 9.2, WBC 14.3, PLT 420 — bu sonuçları yorumlar mısın?',
-                'Pnömoni ile bronşit arasındaki farkı açıkla.',
-                'Metformin ile nelere dikkat etmeliyim?',
-              ].map((suggestion) => (
+              {CH.suggestions.map((suggestion) => (
                 <button
                   key={suggestion}
                   type="button"
@@ -230,7 +223,6 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Attachment önizleme */}
       {attachment && (
         <div className="mb-2 flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl flex-shrink-0">
           {attachment.isPdf ? (
@@ -247,10 +239,12 @@ export default function ChatPage() {
           <div className="flex-1 min-w-0">
             <p className="text-xs text-slate-700 truncate">{attachment.file.name}</p>
             {attachment.isPdf && !pdfText && (
-              <p className="text-xs text-blue-500">PDF okunuyor...</p>
+              <p className="text-xs text-blue-500">{CH.pdf_reading}</p>
             )}
             {pdfText && (
-              <p className="text-xs text-green-600">Metin hazır ({(pdfText.length / 1000).toFixed(1)}k karakter)</p>
+              <p className="text-xs text-green-600">
+                {CH.pdf_ready.replace('{n}', (pdfText.length / 1000).toFixed(1))}
+              </p>
             )}
           </div>
           <button onClick={removeAttachment} className="text-slate-400 hover:text-slate-600 flex-shrink-0">
@@ -261,14 +255,12 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* Giriş alanı */}
       <form onSubmit={handleSend} className="flex gap-2 flex-shrink-0">
         <input ref={fileInputRef} type="file" accept={ACCEPTED} className="hidden" onChange={handleFileSelect} />
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={loading || !!attachment}
-          title="Görüntü, DICOM veya PDF ekle"
           className="px-2.5 py-2.5 text-slate-400 hover:text-blue-500 border border-slate-200 hover:border-blue-300
             rounded-xl transition-colors disabled:opacity-50 flex-shrink-0"
         >
@@ -283,7 +275,7 @@ export default function ChatPage() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={loading}
-          placeholder="Tıbbi soru sorun veya lab sonuçlarını yapıştırın..."
+          placeholder={CH.placeholder}
           className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm
             text-slate-800 placeholder:text-slate-400
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent

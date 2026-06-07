@@ -3,9 +3,12 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useTranslation } from '@/lib/i18n/context'
 
 export default function Navbar() {
   const router = useRouter()
+  const { T, lang, setLang } = useTranslation()
+  const N = T.nav
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -28,35 +31,31 @@ export default function Navbar() {
         </Link>
 
         <div className="flex items-center gap-4">
-          <Link
-            href="/dashboard"
-            className="text-sm text-slate-500 hover:text-slate-800 transition"
-          >
-            Anasayfa
+          <Link href="/" className="text-sm text-slate-500 hover:text-slate-800 transition">
+            {N.home}
           </Link>
-          <Link
-            href="/chat"
-            className="text-sm text-slate-500 hover:text-slate-800 transition"
-          >
-            Asistan
+          <Link href="/chat" className="text-sm text-slate-500 hover:text-slate-800 transition">
+            {N.assistant}
           </Link>
-          <Link
-            href="/medgemma"
-            className="text-sm text-slate-500 hover:text-slate-800 transition"
-          >
-            MedGemma Nedir?
+          <Link href="/medgemma" className="text-sm text-slate-500 hover:text-slate-800 transition hidden sm:block">
+            {N.medgemma}
           </Link>
-          <Link
-            href="/history"
-            className="text-sm text-slate-500 hover:text-slate-800 transition"
-          >
-            Geçmiş
+          <Link href="/history" className="text-sm text-slate-500 hover:text-slate-800 transition">
+            {N.history}
           </Link>
+          {/* Dil toggle */}
+          <button
+            onClick={() => setLang(lang === 'tr' ? 'en' : 'tr')}
+            className="flex items-center gap-1 px-2 py-1 text-xs font-semibold border border-slate-200 rounded-lg hover:bg-slate-50 transition text-slate-500"
+            title={lang === 'tr' ? 'Switch to English' : "Türkçe'ye geç"}
+          >
+            {lang === 'tr' ? '🇬🇧' : '🇹🇷'}
+          </button>
           <button
             onClick={handleSignOut}
             className="text-sm text-slate-500 hover:text-red-600 transition"
           >
-            Çıkış
+            {N.sign_out}
           </button>
         </div>
       </div>
