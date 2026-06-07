@@ -48,7 +48,7 @@ export default async function AnalysisPage({ params }: Props) {
     <div>
       <div className="mb-6">
         <a
-          href="/"
+          href="/dashboard"
           className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

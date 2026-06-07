@@ -15,7 +15,7 @@ export default function NotFound() {
           Aradığınız sayfa mevcut değil veya taşınmış olabilir.
         </p>
         <Link
-          href="/"
+          href="/dashboard"
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700
             text-white font-medium rounded-xl transition-colors text-sm"
         >

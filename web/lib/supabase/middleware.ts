@@ -31,8 +31,9 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
   const isAuthPage = pathname === '/login' || pathname === '/register'
+  const isPublicPage = pathname === '/'
 
-  if (!user && !isAuthPage) {
+  if (!user && !isAuthPage && !isPublicPage) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
@@ -40,7 +41,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone()
-    url.pathname = '/'
+    url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
 
