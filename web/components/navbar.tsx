@@ -35,6 +35,12 @@ export default function Navbar() {
             Anasayfa
           </Link>
           <Link
+            href="/chat"
+            className="text-sm text-slate-500 hover:text-slate-800 transition"
+          >
+            Asistan
+          </Link>
+          <Link
             href="/medgemma"
             className="text-sm text-slate-500 hover:text-slate-800 transition"
           >

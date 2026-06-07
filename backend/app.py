@@ -148,7 +148,7 @@ class MedGemmaBackend:
                 )
 
         class AnalyzeReq(BaseModel):
-            images_base64: list[str]   # 1-5 görüntü
+            images_base64: list[str] = []  # opsiyonel — görüntüsüz metin analizi de desteklenir
             doctor_note: str = ""
 
         class ChatMsg(BaseModel):
@@ -182,47 +182,79 @@ class MedGemmaBackend:
                     if req.doctor_note else ""
                 )
 
-                multi_note = (
-                    f" {image_count} medical images have been provided; analyze them together as a combined study."
-                    if image_count > 1 else ""
-                )
+                if image_count > 0:
+                    multi_note = (
+                        f" {image_count} medical images have been provided; analyze them together as a combined study."
+                        if image_count > 1 else ""
+                    )
 
-                en_prompt = (
-                    "You are a senior radiologist and clinician with subspecialty expertise. "
-                    "You are producing a formal medical image analysis report for qualified medical professionals. "
-                    "Use precise, peer-level clinical and radiological terminology throughout. "
-                    "Be thorough, systematic, and specific — avoid vague or generic statements.\n\n"
-                    "Analyze this medical image and produce a structured report in the following format:\n\n"
+                    en_prompt = (
+                        "You are a senior radiologist and clinician with subspecialty expertise. "
+                        "You are producing a formal medical image analysis report for qualified medical professionals. "
+                        "Use precise, peer-level clinical and radiological terminology throughout. "
+                        "Be thorough, systematic, and specific — avoid vague or generic statements.\n\n"
+                        "Analyze this medical image and produce a structured report in the following format:\n\n"
 
-                    "Findings:\n"
-                    "Perform a systematic, region-by-region analysis. For each identified structure and abnormality describe: "
-                    "anatomical location, size and dimensions (with measurements where estimable), morphology, "
-                    "margins (well-defined, ill-defined, spiculated, lobulated), density or signal characteristics "
-                    "(hyperdense, hypodense, T1/T2 signal, echogenicity), distribution pattern, and relationship to "
-                    "adjacent structures. Note image quality, technical adequacy, and visible artifacts. "
-                    "Document all relevant normal findings alongside abnormal ones.\n\n"
+                        "Findings:\n"
+                        "Perform a systematic, region-by-region analysis. For each identified structure and abnormality describe: "
+                        "anatomical location, size and dimensions (with measurements where estimable), morphology, "
+                        "margins (well-defined, ill-defined, spiculated, lobulated), density or signal characteristics "
+                        "(hyperdense, hypodense, T1/T2 signal, echogenicity), distribution pattern, and relationship to "
+                        "adjacent structures. Note image quality, technical adequacy, and visible artifacts. "
+                        "Document all relevant normal findings alongside abnormal ones.\n\n"
 
-                    "Impression:\n"
-                    "Provide a prioritized clinical interpretation. For each significant finding, "
-                    "state the most likely diagnosis followed by a ranked differential diagnosis with supporting "
-                    "radiological evidence for each. Note acuity — clearly flag any findings that require urgent "
-                    "or emergent clinical attention. Correlate findings with provided clinical history where applicable.\n\n"
+                        "Impression:\n"
+                        "Provide a prioritized clinical interpretation. For each significant finding, "
+                        "state the most likely diagnosis followed by a ranked differential diagnosis with supporting "
+                        "radiological evidence for each. Note acuity — clearly flag any findings that require urgent "
+                        "or emergent clinical attention. Correlate findings with provided clinical history where applicable.\n\n"
 
-                    "Recommendation:\n"
-                    "Provide specific, actionable recommendations ranked by clinical priority:\n"
-                    "- Additional imaging (modality, sequence, contrast, laterality) with clinical rationale\n"
-                    "- Relevant laboratory or pathological investigations\n"
-                    "- Specialist referral (specify subspecialty) with urgency level\n"
-                    "- Follow-up imaging timeline with clinical triggers for earlier reassessment\n"
-                    "- Any immediate clinical intervention if findings warrant it\n\n"
+                        "Recommendation:\n"
+                        "Provide specific, actionable recommendations ranked by clinical priority:\n"
+                        "- Additional imaging (modality, sequence, contrast, laterality) with clinical rationale\n"
+                        "- Relevant laboratory or pathological investigations\n"
+                        "- Specialist referral (specify subspecialty) with urgency level\n"
+                        "- Follow-up imaging timeline with clinical triggers for earlier reassessment\n"
+                        "- Any immediate clinical intervention if findings warrant it\n\n"
 
-                    "Disclaimer: This report is generated by an AI system for clinical decision support only "
-                    "and does not replace specialist evaluation or formal radiological reporting."
-                    f"{multi_note}{note_section}"
-                )
+                        "Disclaimer: This report is generated by an AI system for clinical decision support only "
+                        "and does not replace specialist evaluation or formal radiological reporting."
+                        f"{multi_note}{note_section}"
+                    )
 
-                content = [{"type": "image", "image": img} for img in images]
-                content.append({"type": "text", "text": en_prompt})
+                    content = [{"type": "image", "image": img} for img in images]
+                    content.append({"type": "text", "text": en_prompt})
+                else:
+                    # Görüntüsüz mod: laboratuvar sonucu, doktor raporu, klinik not vb.
+                    text_only_prompt = (
+                        "You are a senior clinician and medical specialist. "
+                        "You are reviewing patient clinical data for qualified medical professionals. "
+                        "Use precise clinical terminology throughout.\n\n"
+                        "Based on the provided clinical data, produce a structured clinical summary in the following format:\n\n"
+
+                        "Findings:\n"
+                        "Systematically summarize the key findings from the provided data. "
+                        "For laboratory results: identify values outside reference ranges, note the degree of deviation, "
+                        "and describe relevant patterns or trends. "
+                        "For clinical notes or reports: extract the core findings, symptoms, and relevant history.\n\n"
+
+                        "Impression:\n"
+                        "Provide a prioritized clinical interpretation of the findings. "
+                        "State the most likely clinical diagnosis or condition, followed by relevant differential diagnoses "
+                        "with supporting evidence. Flag any findings that require urgent attention.\n\n"
+
+                        "Recommendation:\n"
+                        "Provide specific, actionable clinical recommendations:\n"
+                        "- Further investigations (laboratory, imaging) with clinical rationale\n"
+                        "- Specialist referral (specify subspecialty) with urgency level\n"
+                        "- Treatment or management considerations\n"
+                        "- Follow-up timeline\n\n"
+
+                        "Disclaimer: This report is generated by an AI system for clinical decision support only "
+                        "and does not replace specialist evaluation.\n\n"
+                        f"Clinical Data:\n{req.doctor_note}"
+                    )
+                    content = [{"type": "text", "text": text_only_prompt}]
 
                 report_en = self._generate([{
                     "role": "user",

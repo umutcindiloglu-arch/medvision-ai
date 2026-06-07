@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { MultiImageDropzone } from '@/components/multi-image-dropzone'
@@ -8,13 +8,19 @@ import { uploadMedicalImage } from '@/lib/supabase/storage'
 import { createClient } from '@/lib/supabase/client'
 import { readJson, readError } from '@/lib/api'
 
-type Step = 'idle' | 'uploading' | 'analyzing' | 'saving'
+type Step = 'idle' | 'uploading' | 'extracting' | 'analyzing' | 'saving'
 
 const STEP_LABELS: Record<Step, string> = {
   idle: '',
   uploading: 'Görüntüler yükleniyor...',
+  extracting: 'PDF metni okunuyor...',
   analyzing: 'MedGemma analiz ediyor... (15-20 saniye sürebilir)',
   saving: 'Rapor kaydediliyor...',
+}
+
+interface PdfDoc {
+  name: string
+  text: string
 }
 
 function toBase64(file: File): Promise<string> {
@@ -30,12 +36,15 @@ export default function AnalyzePage() {
   const router = useRouter()
   const [files, setFiles] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
+  const [pdfDocs, setPdfDocs] = useState<PdfDoc[]>([])
   const [doctorNote, setDoctorNote] = useState('')
   const [step, setStep] = useState<Step>('idle')
+  const [pdfLoading, setPdfLoading] = useState(false)
+  const pdfInputRef = useRef<HTMLInputElement>(null)
 
   const isLoading = step !== 'idle'
+  const hasContent = files.length > 0 || pdfDocs.length > 0 || doctorNote.trim().length > 0
 
-  // Sayfa açılınca Modal container'ını önceden uyandır (cold-start'ı gizle)
   useEffect(() => {
     fetch('/api/warmup').catch(() => {})
   }, [])
@@ -53,10 +62,39 @@ export default function AnalyzePage() {
     })
   }, [])
 
+  async function handlePdfSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = Array.from(e.target.files ?? [])
+    e.target.value = ''
+    if (selected.length === 0) return
+
+    setPdfLoading(true)
+    for (const file of selected) {
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+        const res = await fetch('/api/extract-pdf', { method: 'POST', body: formData })
+        if (!res.ok) {
+          const { error } = await res.json()
+          toast.error(error ?? 'PDF okunamadı.')
+          continue
+        }
+        const { text } = await res.json()
+        setPdfDocs((prev) => [...prev, { name: file.name, text }])
+      } catch {
+        toast.error(`${file.name} okunamadı.`)
+      }
+    }
+    setPdfLoading(false)
+  }
+
+  function removePdf(index: number) {
+    setPdfDocs((prev) => prev.filter((_, i) => i !== index))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (files.length === 0) {
-      toast.error('Lütfen en az bir görüntü seçin.')
+    if (!hasContent) {
+      toast.error('Görüntü, PDF veya not ekleyin.')
       return
     }
 
@@ -69,16 +107,22 @@ export default function AnalyzePage() {
         return
       }
 
-      // 1. Tüm görüntüleri Storage'a yükle
-      setStep('uploading')
-      const paths: string[] = []
-      for (const file of files) {
-        const { path, error } = await uploadMedicalImage(file, user.id)
-        if (error) throw new Error(`Yükleme hatası: ${error}`)
-        paths.push(path)
+      // 1. Görüntüleri Storage'a yükle (varsa)
+      let paths: string[] = []
+      if (files.length > 0) {
+        setStep('uploading')
+        for (const file of files) {
+          const { path, error } = await uploadMedicalImage(file, user.id)
+          if (error) throw new Error(`Yükleme hatası: ${error}`)
+          paths.push(path)
+        }
       }
 
-      // 2. Tüm görüntüleri base64'e çevir ve Modal'a gönder
+      // 2. PDF metinlerini doctor_note'a ekle
+      const pdfText = pdfDocs.map((d) => `[${d.name}]\n${d.text}`).join('\n\n---\n\n')
+      const combinedNote = [pdfText, doctorNote.trim()].filter(Boolean).join('\n\n')
+
+      // 3. Modal'a gönder
       setStep('analyzing')
       const imagesB64 = await Promise.all(files.map(toBase64))
 
@@ -87,29 +131,30 @@ export default function AnalyzePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           images_b64: imagesB64,
-          doctor_note: doctorNote.trim() || undefined,
+          doctor_note: combinedNote || undefined,
         }),
       })
 
-      if (!res.ok) {
-        throw new Error(await readError(res, 'Analiz başarısız.'))
-      }
+      if (!res.ok) throw new Error(await readError(res, 'Analiz başarısız.'))
 
-      const { report_en, report_tr } = await readJson<{
-        report_en: string
-        report_tr: string
-      }>(res)
+      const { report_en, report_tr } = await readJson<{ report_en: string; report_tr: string }>(res)
 
-      // 3. DB'ye kaydet — paths JSON olarak saklanır
+      // 4. DB'ye kaydet
       setStep('saving')
-      const imageUrl = paths.length === 1 ? paths[0] : JSON.stringify(paths)
+      const imageUrl = paths.length > 1 ? JSON.stringify(paths) : (paths[0] ?? '')
+      const imageName = files.length > 0
+        ? files.map((f) => f.name).join(', ')
+        : pdfDocs.length > 0
+          ? pdfDocs.map((d) => d.name).join(', ')
+          : 'Metin analizi'
+
       const { data: analysis, error: dbError } = await supabase
         .from('analyses')
         .insert({
           user_id: user.id,
           image_url: imageUrl,
-          image_name: files.map((f) => f.name).join(', '),
-          doctor_note: doctorNote.trim() || null,
+          image_name: imageName,
+          doctor_note: combinedNote || null,
           report_en,
           report_tr,
         })
@@ -131,7 +176,8 @@ export default function AnalyzePage() {
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-slate-800">Yeni Analiz</h1>
         <p className="text-slate-500 mt-1 text-sm">
-          Tıbbi görüntülerinizi yükleyin, MedGemma yapay zekası analiz etsin. JPEG, PNG ve DICOM (.dcm) desteklenir. En fazla 5 görüntü ekleyebilirsiniz.
+          Tıbbi görüntü, PDF belge veya laboratuvar sonuçlarınızı yükleyin — MedGemma analiz etsin.
+          JPEG, PNG, DICOM (.dcm) ve PDF desteklenir.
         </p>
       </div>
 
@@ -147,10 +193,14 @@ export default function AnalyzePage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+
+        {/* Görüntüler — opsiyonel */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Tıbbi Görüntüler <span className="text-red-500">*</span>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Tıbbi Görüntüler
+            <span className="ml-1 text-slate-400 font-normal">(opsiyonel)</span>
           </label>
+          <p className="text-xs text-slate-400 mb-2">X-ray, MRI, CT — JPG, PNG, DICOM. En fazla 5 görüntü.</p>
           <MultiImageDropzone
             files={files}
             previews={previews}
@@ -160,17 +210,86 @@ export default function AnalyzePage() {
           />
         </div>
 
+        {/* PDF Belgeler — opsiyonel */}
         <div>
-          <label htmlFor="doctorNote" className="block text-sm font-medium text-slate-700 mb-2">
-            Klinisyen Notu <span className="text-slate-400 font-normal">(isteğe bağlı)</span>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            PDF Belgeler
+            <span className="ml-1 text-slate-400 font-normal">(opsiyonel)</span>
+          </label>
+          <p className="text-xs text-slate-400 mb-2">Kan tahlili, doktor raporu, epikriz vb. PDF dosyaları.</p>
+
+          <input
+            ref={pdfInputRef}
+            type="file"
+            accept="application/pdf"
+            multiple
+            className="hidden"
+            onChange={handlePdfSelect}
+          />
+
+          {pdfDocs.length > 0 && (
+            <div className="mb-2 space-y-1.5">
+              {pdfDocs.map((doc, i) => (
+                <div key={i} className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg">
+                  <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="text-xs text-slate-700 flex-1 truncate">{doc.name}</span>
+                  <span className="text-xs text-slate-400">{(doc.text.length / 1000).toFixed(1)}k karakter</span>
+                  <button
+                    type="button"
+                    onClick={() => removePdf(i)}
+                    className="text-slate-400 hover:text-red-500 transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => pdfInputRef.current?.click()}
+            disabled={isLoading || pdfLoading}
+            className="flex items-center gap-2 px-4 py-2 border border-dashed border-slate-300 rounded-xl
+              text-sm text-slate-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/50
+              disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {pdfLoading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                PDF okunuyor...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                    d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                PDF Ekle
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Klinisyen Notu */}
+        <div>
+          <label htmlFor="doctorNote" className="block text-sm font-medium text-slate-700 mb-1">
+            Klinisyen Notu veya Laboratuvar Sonuçları
+            <span className="ml-1 text-slate-400 font-normal">(opsiyonel)</span>
           </label>
           <textarea
             id="doctorNote"
             value={doctorNote}
             onChange={(e) => setDoctorNote(e.target.value)}
             disabled={isLoading}
-            rows={3}
-            placeholder="Örn: 65 yaşında erkek hasta, öksürük şikayetiyle başvurdu. Göğüs X-ray AP ve lateral..."
+            rows={4}
+            placeholder="Örn: 65 yaşında erkek hasta, öksürük şikayetiyle başvurdu...
+Veya doğrudan laboratuvar sonuçlarını yapıştırın: HGB: 9.2 g/dL, WBC: 14.3 ×10³/μL..."
             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder-slate-400
               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
               disabled:opacity-60 disabled:cursor-not-allowed resize-none transition"
@@ -186,11 +305,15 @@ export default function AnalyzePage() {
 
         <button
           type="submit"
-          disabled={isLoading || files.length === 0}
+          disabled={isLoading || pdfLoading || !hasContent}
           className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed
             text-white font-medium rounded-xl transition-colors text-sm"
         >
-          {isLoading ? 'Analiz ediliyor...' : `Analiz Et${files.length > 1 ? ` (${files.length} görüntü)` : ''}`}
+          {isLoading
+            ? 'Analiz ediliyor...'
+            : files.length > 1
+              ? `Analiz Et (${files.length} görüntü)`
+              : 'Analiz Et'}
         </button>
       </form>
     </div>
