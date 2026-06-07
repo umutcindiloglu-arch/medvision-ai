@@ -122,7 +122,7 @@ export default async function LandingPage() {
             />
             {/* Anomali noktaları */}
             <div className="animate-anomaly-pulse absolute w-3 h-3 rounded-full bg-red-500" style={{ top: '40%', left: '38%' }} />
-            <div className="animate-anomaly-pulse absolute w-2 h-2 rounded-full bg-red-500" style={{ top: '55%', left: '58%', animationDelay: '.4s' }} />
+            <div className="animate-anomaly-pulse absolute w-2 h-2 rounded-full bg-red-500" style={{ top: '55%', left: '58%', '--anim-delay': '.4s' } as React.CSSProperties} />
             {/* Köşe çerçeveleri */}
             <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-blue-500 opacity-60" />
             <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-blue-500 opacity-60" />

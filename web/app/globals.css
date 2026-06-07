@@ -42,7 +42,7 @@ body {
   50%       { box-shadow: 0 0 0 7px rgba(239, 68, 68, 0.1), 0 0 16px rgba(239, 68, 68, 0.4); }
 }
 .animate-anomaly-pulse {
-  animation: anomaly-pulse 1.5s ease-in-out infinite;
+  animation: anomaly-pulse 1.5s ease-in-out var(--anim-delay, 0s) infinite;
 }
 
 @keyframes bar-grow {
