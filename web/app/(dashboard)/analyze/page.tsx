@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { MultiImageDropzone } from '@/components/multi-image-dropzone'
 import { uploadMedicalImage } from '@/lib/supabase/storage'
 import { createClient } from '@/lib/supabase/client'
+import { readJson, readError } from '@/lib/api'
 
 type Step = 'idle' | 'uploading' | 'analyzing' | 'saving'
 
@@ -91,11 +92,13 @@ export default function AnalyzePage() {
       })
 
       if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error ?? 'Analiz başarısız.')
+        throw new Error(await readError(res, 'Analiz başarısız.'))
       }
 
-      const { report_en, report_tr } = await res.json()
+      const { report_en, report_tr } = await readJson<{
+        report_en: string
+        report_tr: string
+      }>(res)
 
       // 3. DB'ye kaydet — paths JSON olarak saklanır
       setStep('saving')

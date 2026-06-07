@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Message } from '@/types'
+import { readJson, readError } from '@/lib/api'
 
 interface ChatPanelProps {
   analysisId: string
@@ -94,11 +95,10 @@ export function ChatPanel({ analysisId, initialMessages }: ChatPanelProps) {
       })
 
       if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error ?? 'Yanıt alınamadı.')
+        throw new Error(await readError(res, 'Yanıt alınamadı.'))
       }
 
-      const { reply } = await res.json()
+      const { reply } = await readJson<{ reply: string }>(res)
       setMessages((prev) => [...prev, {
         id: `temp-${Date.now()}-a`,
         analysis_id: analysisId,
