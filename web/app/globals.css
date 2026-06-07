@@ -24,3 +24,65 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ── Landing page scanner animations ── */
+@keyframes scan-beam {
+  0%   { top: 5%;  opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { top: 95%; opacity: 0; }
+}
+.animate-scan-beam {
+  animation: scan-beam 2.2s linear infinite;
+  position: absolute;
+}
+
+@keyframes anomaly-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2); }
+  50%       { box-shadow: 0 0 0 7px rgba(239, 68, 68, 0.1), 0 0 16px rgba(239, 68, 68, 0.4); }
+}
+.animate-anomaly-pulse {
+  animation: anomaly-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes bar-grow {
+  from { width: 0; }
+  to   { width: var(--bar-w); }
+}
+.animate-bar-grow {
+  animation: bar-grow 1.8s ease forwards;
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in {
+  animation: slide-in-left 0.35s ease both;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fade-up 0.4s ease both;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+.animate-dot-pulse {
+  animation: dot-pulse 1s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-scan-beam,
+  .animate-anomaly-pulse,
+  .animate-bar-grow,
+  .animate-slide-in,
+  .animate-fade-up,
+  .animate-dot-pulse { animation: none; }
+  .animate-bar-grow { width: var(--bar-w); }
+}
