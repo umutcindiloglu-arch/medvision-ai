@@ -43,7 +43,7 @@ export default function RegisterPage() {
 
     // Oturum açıldıysa (e-posta onayı kapalı) direkt dashboard'a git
     if (data.session) {
-      router.push('/')
+      router.push('/dashboard')
       router.refresh()
       return
     }
