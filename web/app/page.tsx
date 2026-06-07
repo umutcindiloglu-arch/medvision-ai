@@ -147,7 +147,7 @@ export default async function LandingPage() {
               <div className="h-1 bg-slate-950 rounded overflow-hidden mb-1">
                 <div
                   className="animate-bar-grow h-full rounded bg-gradient-to-r from-red-600 to-orange-400"
-                  style={{ '--bar-w': '12%', animationDelay: '.3s' } as React.CSSProperties}
+                  style={{ '--bar-w': '12%', '--anim-delay': '.3s' } as React.CSSProperties}
                 />
               </div>
               <p className="text-sm font-bold text-red-400">%12 dikkat</p>
@@ -164,7 +164,7 @@ export default async function LandingPage() {
               <div
                 key={label}
                 className="animate-slide-in flex items-center justify-between px-2 py-1.5 bg-slate-800 rounded-md"
-                style={{ animationDelay: delay }}
+                style={{ '--anim-delay': delay } as React.CSSProperties}
               >
                 <span className="text-[11px] text-slate-400 font-mono">{label}</span>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${color}`}>{level}</span>
@@ -175,7 +175,7 @@ export default async function LandingPage() {
           {/* Rapor hazır */}
           <div
             className="animate-fade-up flex items-center gap-2 bg-blue-950/40 border border-sky-900/40 rounded-lg px-3 py-2"
-            style={{ animationDelay: '1.6s' }}
+            style={{ '--anim-delay': '1.6s' } as React.CSSProperties}
           >
             <span
               className="animate-dot-pulse w-2 h-2 rounded-full bg-green-400 flex-shrink-0"
