@@ -17,7 +17,7 @@ export default function Navbar() {
   return (
     <nav className="bg-white border-b border-slate-200 sticky top-0 z-10">
       <div className="container mx-auto px-4 max-w-5xl h-14 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-semibold text-slate-800 hover:text-blue-600 transition">
+        <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-slate-800 hover:text-blue-600 transition">
           <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
             <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -28,6 +28,12 @@ export default function Navbar() {
         </Link>
 
         <div className="flex items-center gap-4">
+          <Link
+            href="/dashboard"
+            className="text-sm text-slate-500 hover:text-slate-800 transition"
+          >
+            Anasayfa
+          </Link>
           <Link
             href="/medgemma"
             className="text-sm text-slate-500 hover:text-slate-800 transition"
