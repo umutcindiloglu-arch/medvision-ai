@@ -1,7 +1,7 @@
 # MedVision AI — Uygulama Planı
 
 **Proje:** MedVision AI  
-**Tarih:** 2026-06-06  
+**Güncelleme:** 2026-06-07  
 **Tahmini Süre:** 4-5 hafta (yarı zamanlı çalışma ile)
 
 ---
@@ -14,7 +14,8 @@ Faz 2: AI Backend           (Modal + FastAPI + MedGemma)  ✅ Tamamlandı
 Faz 3: Çekirdek Özellikler  (Yükleme + Analiz + Rapor)   ✅ Tamamlandı
 Faz 4: Chat + Geçmiş        (Sohbet + Analiz Geçmişi)    ✅ Tamamlandı
 Faz 5: Canlıya Alma         (Deploy + Test + Polish)      ✅ Tamamlandı
-Faz 6: Ücretlendirme        (Ücretsiz hak + Abonelik)    📋 Planlandı
+Faz 6: UI/UX + i18n         (Landing + TR/EN + Fiyatlar) ✅ Tamamlandı
+Faz 7: Ücretlendirme        (Ücretsiz hak + Abonelik)    🔄 Kısmen uygulandı
 ```
 
 > **🎉 Proje canlıda:** [yapayzekahekim.com](https://yapayzekahekim.com) (Vercel + Hostinger özel alan adı)
@@ -46,7 +47,7 @@ Faz 6: Ücretlendirme        (Ücretsiz hak + Abonelik)    📋 Planlandı
 - [x] `@supabase/ssr` paketini kur
 - [x] Giriş sayfası (`/login`) oluştur
 - [x] Kayıt sayfası (`/register`) oluştur
-- [x] `proxy.ts` ile korumalı route'ları ayarla (Next.js 16'da `middleware.ts` → `proxy.ts`)
+- [x] `middleware.ts` ile korumalı route'ları ayarla
 - [x] Çıkış yapma fonksiyonu ekle (Navbar'da)
 
 #### 1.4 Temel Layout
@@ -88,7 +89,7 @@ Faz 6: Ücretlendirme        (Ücretsiz hak + Abonelik)    📋 Planlandı
 #### 2.3 Güvenlik
 - [x] Supabase JWT ile her endpoint korumalı (`/auth/v1/user` doğrulama)
 - [x] CORS ayarları (allow_origins=*)
-- [ ] Rate limiting — Faz 5'te eklenecek
+- [x] Rate limiting — Backend'de 10 analiz/saat
 
 #### 2.4 Test
 - [x] `/health` endpoint çalışıyor: `{"status":"ok","model":"medgemma-4b-it"}`
@@ -100,8 +101,6 @@ Faz 6: Ücretlendirme        (Ücretsiz hak + Abonelik)    📋 Planlandı
 
 **Faz 2 Tamamlanma Kriteri:** ✅ Backend canlıda, JWT koruması aktif.
 
-> **Not:** `container_idle_timeout` → `scaledown_window`, `allow_concurrent_inputs` → `@modal.concurrent()` olarak güncellendi (Modal API değişiklikleri).
-
 ---
 
 ## Faz 3 — Çekirdek Özellikler ✅
@@ -112,36 +111,27 @@ Faz 6: Ücretlendirme        (Ücretsiz hak + Abonelik)    📋 Planlandı
 ### Adımlar
 
 #### 3.1 Görüntü Yükleme
-- [x] Sürükle-bırak yükleme bileşeni (`react-dropzone`) — `components/image-dropzone.tsx`
+- [x] Sürükle-bırak yükleme bileşeni — `components/multi-image-dropzone.tsx`
 - [x] Görüntü önizleme (yüklemeden önce)
-- [ ] DICOM desteği — Faz 5'e bırakıldı (karmaşık, cornerstone.js gerekiyor)
+- [x] DICOM desteği (`dicom-parser`, client-side PNG dönüşümü)
 - [x] Supabase Storage'a yükleme fonksiyonu — `lib/supabase/storage.ts`
-- [x] Dosya boyutu ve format validasyonu (max 20MB, JPG/PNG/WebP)
+- [x] Dosya boyutu ve format validasyonu (max 200MB, JPG/PNG/WebP/DICOM)
 
 #### 3.2 Analiz Sayfası (`/analyze`)
-- [x] Yükleme formu (görüntü + klinisyen notu)
-- [x] "Analiz Et" butonuna basılınca:
-  1. Görüntüyü Supabase Storage'a yükle
-  2. Modal `/analyze` endpoint'ini `/api/analyze` proxy üzerinden çağır
-  3. Yükleme animasyonu göster ("MedGemma analiz ediyor...")
-  4. Sonucu veritabanına kaydet
-  5. Sonuç sayfasına yönlendir
-- [x] `app/api/analyze/route.ts` — Modal URL sunucu tarafında kalır (güvenli)
+- [x] Yükleme formu (görüntü + PDF + klinisyen notu)
+- [x] Modal `/analyze` endpoint'ini `/api/analyze` proxy üzerinden çağır
+- [x] Yükleme animasyonu göster
+- [x] Sonucu veritabanına kaydet
+- [x] Sonuç sayfasına yönlendir
 
 #### 3.3 Rapor Sayfası (`/analysis/[id]`)
 - [x] Sol: Görüntü görüntüleyici (Supabase Storage imzalı URL)
 - [x] Sağ: Rapor (TR/EN dil toggle)
 - [x] Bulgular / Yorum / Öneri bölümleri (metin parsing)
-- [x] PDF indirme (`jsPDF`)
+- [x] PDF indirme (pdfmake + tam Türkçe/Unicode)
 - [x] Tıbbi sorumluluk reddi uyarısı
 
-#### 3.4 Ana Sayfa Güncelleme
-- [x] "Yeni Analiz Başlat" CTA butonu
-- [x] Son 5 analiz listesi
-
 **Faz 3 Tamamlanma Kriteri:** ✅ Görüntü yüklenip rapor görüntülenebilmeli.
-
-> **Not:** Modal URL sunucu tarafında kalması için `app/api/analyze/route.ts` proxy eklendi.
 
 ---
 
@@ -169,8 +159,8 @@ Faz 6: Ücretlendirme        (Ücretsiz hak + Abonelik)    📋 Planlandı
 - [x] Analiz silme (Storage + DB, onay diyaloğu)
 - [x] **Kayıt yeniden adlandırma:** satır içi inline rename (kalem ikonu)
 
-#### 4.3 Çoklu Görüntü (Faz 4 sırasında eklendi)
-- [x] Tek analizde 5 görüntüye kadar yükleme (`components/multi-image-dropzone.tsx`)
+#### 4.3 Çoklu Görüntü
+- [x] Tek analizde 5 görüntüye kadar yükleme
 - [x] `image_url` alanı geriye dönük uyumlu: tek yol veya JSON array string
 - [x] Rapor sayfasında küçük resim galerisi + navigasyon
 
@@ -187,78 +177,92 @@ Faz 6: Ücretlendirme        (Ücretsiz hak + Abonelik)    📋 Planlandı
 
 #### 5.1 Modal Deploy
 - [x] `modal deploy backend/app.py` ile production'a deploy edildi
-- [x] Production secret'ları kontrol edildi (`huggingface-token`, `supabase-config`)
+- [x] Production secret'ları kontrol edildi
 
 #### 5.2 Vercel Deploy
 - [x] GitHub'a push edildi
 - [x] Vercel'de proje oluşturuldu (GitHub ile bağlı, otomatik deploy)
-- [x] **Monorepo ayarı:** Root Directory = `web` (kritik — yoksa 404)
-- [x] Environment variable'lar Vercel'e eklendi:
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  - `MODAL_API_URL`
+- [x] **Monorepo ayarı:** Root Directory = `web`
+- [x] Environment variable'lar Vercel'e eklendi
 
 #### 5.3 Özel Alan Adı
 - [x] `yapayzekahekim.com` (Hostinger) Vercel'e bağlandı
 - [x] DNS kayıtları: A (`@` → `216.198.79.1`), CNAME (`www` → `*.vercel-dns-017.com`)
 
-#### 5.4 Test
-- [x] End-to-end test: Kayıt → Giriş → Yükleme → Analiz → Chat → Geçmiş
-- [x] Canlı ortamda doğrulandı (kullanıcı onayladı)
-
-#### 5.5 Son Dokunuşlar
-- [x] Rate limiting backend'e eklendi (10 analiz/saat, kullanıcı JWT ile sayım)
+#### 5.4 Son Dokunuşlar
+- [x] Rate limiting backend'e eklendi
 - [x] Hata mesajları Türkçe
-- [x] Boş durum ekranları (henüz analiz yok)
-- [x] Favicon (`app/icon.svg`) ve meta tag'ler (Open Graph, viewport, SEO)
+- [x] Boş durum ekranları
+- [x] Favicon (`app/icon.svg`), meta tag'ler (Open Graph, viewport, SEO)
 - [x] 404 sayfaları (global + analiz)
 - [x] Tıbbi sorumluluk reddi uyarıları
 - [x] **PDF:** jsPDF → pdfmake (gömülü Roboto, tam Unicode/Türkçe desteği)
+- [x] **Cold-start:** `maxDuration=60` + `/api/warmup` ön ısıtma
 
-#### 5.6 Deploy Sonrası Düzeltmeler (canlı testlerden sonra)
-- [x] Sohbette görüntü opsiyonel hale getirildi (multi-image JSON parse + boş string fallback)
-- [x] Chat input/arama yazı renkleri düzeltildi (explicit `text-slate-800`)
-- [x] Chat paneli kart stiline alındı (rapor bölümleriyle tutarlı)
-- [x] **Cold-start düzeltmesi:** route'lara `maxDuration=60` + `/api/warmup` ön ısıtma (sayfa açılınca container uyandırılıyor)
-
-**Faz 5 Tamamlanma Kriteri:** ✅ Uygulama canlıda ([yapayzekahekim.com](https://yapayzekahekim.com)), tüm özellikler çalışıyor.
+**Faz 5 Tamamlanma Kriteri:** ✅ Uygulama canlıda, tüm özellikler çalışıyor.
 
 ---
 
-## Faz 6 — Ücretlendirme / Abonelik 📋
+## Faz 6 — UI/UX + TR/EN i18n + Fiyatlandırma ✅
 
-**Durum:** Planlandı (detaylar daha sonra netleştirilecek)  
+**Süre:** 2026-06-07  
+**Amaç:** Landing sayfası, iki dil desteği, fiyatlandırma, navigasyon düzeltmeleri
+
+### Tamamlananlar
+
+- [x] **Landing sayfası** (`/`) — animasyonlu tanıtım, scanner efekti, nasıl çalışır, özellikler, MedGemma, fiyatlandırma, CTA
+- [x] **TR/EN dil desteği** — `lib/i18n/` (translations.ts + context.tsx), tüm sayfalarda `useTranslation()`
+- [x] **Fiyatlandırma bölümü** — 5 plan: Ücretsiz / $20 / $50 / $120 / Kurumsal (yalnızca frontend)
+- [x] **Navigasyon düzeltmesi** — "Anasayfa" sekmesi `/` yönlendirir; giriş yapanlar için "Panele Git" butonu
+- [x] **Auth sayfaları** — Anasayfaya dönüş linki + logo tıklanabilir
+- [x] **Input text renkleri** — `text-slate-900 bg-white` auth formlarda
+- [x] **Landing virgül düzeltmesi** — hero başlığındaki çift virgül giderildi
+- [x] **DICOM desteği** — `dicom-parser` ile client-side dönüşüm
+- [x] **PDF metin çıkartma** — server-side `pdf-parse` ile `/api/extract-pdf`
+- [x] **Serbest asistan sohbeti** — `/chat` sayfası (görüntü/PDF/DICOM eki destekli)
+- [x] **Sohbet geçmişi** — `chat_sessions` + `chat_messages` tabloları, `/history` sayfasında sekme
+
+**Faz 6 Tamamlanma Kriteri:** ✅ İki dilli landing sayfası + fiyatlandırma + sohbet geçmişi canlıda.
+
+---
+
+## Faz 7 — Ücretlendirme / Abonelik 🔄
+
+**Durum:** Kısmen uygulandı — frontend hazır, ödeme backend'i yapılacak  
 **Amaç:** Ücretsiz deneme hakkı + aylık abonelik ile gelir modeli
 
-### Model
+### Tamamlananlar
 
-| Plan | Fiyat | Hak |
+- [x] **Ücretsiz tier: 3 analiz** — `/api/analyze` server-side kota kontrolü, hak bitince kullanıcıya bilgilendirme
+- [x] **Fiyatlandırma sayfası** — Landing sayfasında 5 plan (yalnızca frontend, ödeme yok)
+- [x] **Analiz sayacı** — Supabase'den `count` sorgusu ile anlık kontrol
+
+### Yapılacaklar
+
+| Öncelik | Görev |
+|---|---|
+| 🔴 Yüksek | Kullanıcı başına `profiles` tablosu (plan, kullanım sayacı) |
+| 🔴 Yüksek | **Stripe entegrasyonu** — abonelik oluşturma, webhook ile durum senkronizasyonu |
+| 🔴 Yüksek | Analiz akışında plan bazlı kota kontrolü (Free=3, Starter=30, Pro=100, Enterprise=300) |
+| 🟡 Orta | `/subscribe` sayfası — plan seçimi + Stripe Checkout |
+| 🟡 Orta | Kullanıcı panelinde kota durumu göstergesi (kaç hak kaldı) |
+| 🟡 Orta | Abonelik yönetimi (iptal, yenileme, fatura) |
+| 🟢 Düşük | KVKK / fatura gereksinimleri |
+| 🟢 Düşük | Webhook güvenliği (Stripe imzası doğrulama) |
+
+### Abonelik Planları
+
+| Plan | Fiyat | Analiz/Ay |
 |---|---|---|
-| **Ücretsiz** | $0 | Üyelik sırasında **1 ücretsiz analiz hakkı** |
-| **Aylık Abonelik** | **$10 / ay** | (Detaylar sonra) — sınırsız veya yüksek kotalı analiz |
+| **Ücretsiz** | $0 | 3 (toplam, sınır kalıcı) |
+| **Starter** | $20/ay | 30 |
+| **Professional** | $50/ay | 100 |
+| **Enterprise** | $120/ay | 300 |
+| **Kurumsal** | İletişim | 300+ |
 
-### Akış
+> **Mevcut durum:** İlk 3 analiz ücretsiz, 4. analizde "Hakkınız doldu" mesajı. Abonelik sayfası görsel olarak hazır ama ödeme akışı yok.
 
-1. Kullanıcı ücretsiz üye olur → **1 analiz hakkı** tanımlanır
-2. İlk analizi yapar (hak kullanılır)
-3. İkinci analizi denediğinde → analiz çalışır/sonuç hazırlanırken
-   **"Ücretsiz hakkınız bitti — Abone Olun"** sayfası gösterilir
-4. Kullanıcı $10/ay aboneliğe geçerse analiz hakları açılır
-
-### Yapılacaklar (taslak — netleştirilecek)
-
-- [ ] Kullanıcı başına kalan hak/kota takibi (Supabase'de `profiles` veya `usage` tablosu)
-- [ ] Analiz akışında hak kontrolü (hak yoksa abonelik sayfasına yönlendir)
-- [ ] **Abonelik sayfası** (`/subscribe` veya `/pricing`) — plan karşılaştırması + ödeme CTA
-- [ ] Ödeme sağlayıcı entegrasyonu (örn. **Stripe** — abonelik, webhook ile durum senkronizasyonu)
-- [ ] Abonelik durumu (aktif/iptal/süresi dolmuş) ile analiz erişimini eşitle
-- [ ] Faturalandırma/abonelik yönetimi (iptal, yenileme)
-- [ ] Webhook güvenliği ve abonelik durumunun backend rate-limit ile entegrasyonu
-
-> **Not:** Ödeme sağlayıcı seçimi, kota detayları (sınırsız mı, X analiz/ay mı), deneme
-> süresi ve KVKK/fatura gereksinimleri daha sonra konuşulacak.
-
-**Faz 6 Tamamlanma Kriteri:** Kullanıcı ücretsiz hakkını kullanabilir, hak bitince abonelik sayfası gösterilir, $10/ay abonelik ile erişim açılır.
+**Faz 7 Tamamlanma Kriteri:** Kullanıcı Stripe üzerinden plan seçip ödeme yapabilir, kota otomatik güncellenir.
 
 ---
 

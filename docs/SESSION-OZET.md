@@ -1,12 +1,12 @@
 # Oturum Özeti — MedVision AI Projesi
 
-**Son Güncelleme:** 2026-06-06  
-**Durum:** 🎉 **Tüm fazlar tamamlandı** (Faz 1–5 ✅) — uygulama canlıda  
+**Son Güncelleme:** 2026-06-07  
+**Durum:** 🎉 **Faz 1–6 tamamlandı, Faz 7 kısmen uygulandı** — uygulama canlıda  
 **Canlı URL:** [yapayzekahekim.com](https://yapayzekahekim.com)
 
 ---
 
-## 1. Sistem Kurulumları (Önceki Oturum)
+## 1. Sistem Kurulumları
 
 ### Python 3.12 — Kurulu Kütüphaneler
 
@@ -20,7 +20,7 @@
 
 ### Web Geliştirme Araçları
 - Node.js v26.0.0, pnpm 11.5.2
-- TypeScript 6.0.3, Prisma 7.8.0
+- TypeScript 6.0.3
 
 ### Önemli Notlar
 - Apple M1 — PyTorch MPS aktif
@@ -34,162 +34,130 @@
 ```
 medgemma-app/
 ├── docs/
-│   ├── PLAN.md                    ← Güncel 5 fazlı plan (Faz 1+2 tamamlandı)
-│   ├── SESSION-OZET.md            ← Bu dosya
-│   └── superpowers/specs/
-│       └── 2026-06-06-medvision-ai-design.md
+│   ├── PLAN.md                    ← Güncel plan (Faz 1–7)
+│   └── SESSION-OZET.md            ← Bu dosya
 ├── backend/
 │   └── app.py                     ← Modal + FastAPI + MedGemma 4b-it
 └── web/
-    ├── proxy.ts                   ← Auth proxy (Next.js 16)
-    ├── supabase/schema.sql        ← SQL şeması + RLS politikaları
-    ├── .env.local                 ← Ortam değişkenleri (git'e girmez)
-    ├── .env.local.example         ← Şablon
-    ├── lib/supabase/
-    │   ├── client.ts              ← Browser Supabase client
-    │   ├── server.ts              ← Server Supabase client
-    │   └── middleware.ts          ← Session güncelleme
-    ├── types/index.ts             ← Analysis, Message tipleri
+    ├── middleware.ts               ← Auth proxy (Next.js 16)
+    ├── supabase/
+    │   ├── schema.sql              ← SQL şeması + RLS politikaları
+    │   └── migrations/
+    │       └── 002_chat_sessions.sql ← Chat oturumları için migration
+    ├── .env.local                  ← Ortam değişkenleri (git'e girmez)
+    ├── lib/
+    │   ├── supabase/               ← client.ts, server.ts, storage.ts
+    │   └── i18n/                   ← translations.ts, context.tsx
+    ├── types/index.ts              ← Analysis, Message tipleri
     ├── components/
-    │   ├── navbar.tsx             ← Dashboard navbar
-    │   └── ui/skeleton.tsx        ← Loading skeleton
+    │   ├── landing-client.tsx      ← Landing sayfası
+    │   ├── dashboard-client.tsx    ← Dashboard ana sayfa
+    │   ├── navbar.tsx              ← Dashboard navbar
+    │   ├── chat-panel.tsx          ← Rapor sayfası sohbet paneli
+    │   └── multi-image-dropzone.tsx
     └── app/
-        ├── (auth)/login/          ← Giriş sayfası
-        ├── (auth)/register/       ← Kayıt sayfası
-        └── (dashboard)/          ← Ana sayfa (placeholder)
+        ├── page.tsx                ← Landing (server component)
+        ├── (auth)/login/           ← Giriş sayfası
+        ├── (auth)/register/        ← Kayıt sayfası
+        └── (dashboard)/
+            ├── dashboard/          ← Ana panel
+            ├── analyze/            ← Yeni analiz
+            ├── analysis/[id]/      ← Rapor sayfası
+            ├── chat/               ← Serbest asistan sohbeti
+            └── history/            ← Geçmiş (analizler + sohbetler)
 ```
 
 ---
 
-## 3. Faz 1 — Tamamlananlar (2026-06-06)
+## 3. Faz 1–5 Özeti
+
+Temel altyapı, AI backend, analiz/rapor sistemi, sohbet paneli ve geçmiş sayfası tamamlandı. Deploy: Vercel + Modal + özel alan adı `yapayzekahekim.com`. Detaylar için geçmiş oturum notlarına bakınız.
+
+---
+
+## 4. Faz 6 — UI/UX + TR/EN i18n (2026-06-07)
 
 ### Yapılanlar
-- Next.js 16 projesi `web/` altında kuruldu (monorepo yapısı)
-- Supabase Auth: email/şifre kayıt + giriş
-- `proxy.ts` ile route koruması (Next.js 16'da middleware → proxy)
-- Login + Register sayfaları (Türkçe hata mesajları)
-- Navbar, Skeleton, Toast (Sonner) bileşenleri
-- Supabase: `analyses` + `messages` tabloları, RLS politikaları
-- Supabase Storage: `medical-images` private bucket
+
+#### Landing Sayfası
+- Animasyonlu landing sayfası (`components/landing-client.tsx`):
+  - Scanner/analiz CSS animasyonu (CSS-only, `@keyframes`)
+  - Nasıl çalışır, özellikler, MedGemma tanıtım, fiyatlandırma, CTA banner, footer
+  - Giriş yapmış kullanıcılar için "Panele Git" butonu (yönlendirme yerine)
+- Navbar "Anasayfa" sekmesi `/` adresine bağlandı
+- Auth sayfalarında logo tıklanabilir + "← Anasayfa" geri linki eklendi
+
+#### TR/EN Dil Desteği
+- `lib/i18n/translations.ts` — tüm UI metinleri (tr + en)
+- `lib/i18n/context.tsx` — `LanguageProvider` (localStorage kalıcılığı)
+- Tüm sayfalarda `useTranslation()` ile dil anahtarları
+- Navbar ve auth layout'ta dil toggle butonu
+
+#### Fiyatlandırma
+- Landing sayfasında 5 plan: Ücretsiz / $20 / $50 / $120 / Kurumsal
+- `#pricing` anchor, navbar'dan tıklanabilir
+
+#### Düzeltmeler
+- Landing hero başlığındaki çift virgül giderildi (`hero_title_3` düzeltildi)
+- Auth formlardaki input rengi: `text-slate-900 bg-white`
 
 ### Kritik Notlar
-- Next.js 16'da `middleware.ts` → `proxy.ts`, export adı `middleware` → `proxy`
-- pnpm 11+ ayarları `package.json`'da değil, `pnpm-workspace.yaml`'da
-- `allowBuilds: {sharp: true, unrs-resolver: true}` gerekli
-- Supabase E-posta onayı geliştirme için kapatıldı (Authentication > Providers > Email)
-
-### Test Sonucu ✅
-- Kayıt → Giriş → Dashboard yönlendirmesi çalışıyor
-- Giriş yapmadan `/` → `/login` yönlendirmesi çalışıyor
+- Server component + i18n: server component veriyi prop olarak client component'a geçirir
+- TypeScript: `t[lang] as Translations` ile tip uyumsuzluğu çözüldü
 
 ---
 
-## 4. Faz 2 — Tamamlananlar (2026-06-06)
+## 5. Faz 7 — Ücretlendirme (Kısmi, 2026-06-07)
 
-### Yapılanlar
-- `backend/app.py`: Modal üzerinde MedGemma 4b-it servisi
-- A10G GPU, `medgemma-cache` volume (model kalıcı cache)
-- `POST /analyze`: görüntü → EN rapor → TR çeviri
-- `POST /chat`: görüntü bağlamlı çok turlu sohbet
-- Supabase JWT doğrulama (her endpoint korumalı)
-- Modal deploy başarılı
+### Tamamlananlar
 
-### Modal Secret'lar
-- `huggingface-token` → `HF_TOKEN`
-- `supabase-config` → `SUPABASE_URL` + `SUPABASE_ANON_KEY`
+#### 3 Ücretsiz Analiz Limiti
+- `/api/analyze/route.ts`'de server-side kota kontrolü:
+  ```ts
+  const { count } = await supabase.from('analyses')
+    .select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+  if ((count ?? 0) >= 3) return 403 + bilgilendirme mesajı
+  ```
+- Hata mesajı: "Ücretsiz 3 analiz hakkınız doldu. Abonelik sistemi yakında eklenecek."
 
-### Deploy Bilgileri
-- **Backend URL:** `https://umutcindiloglu--medvision-ai-medgemmabackend-api.modal.run`
-- **Modal Dashboard:** https://modal.com/apps/umutcindiloglu/main/deployed/medvision-ai
-- **GitHub:** https://github.com/umutcindiloglu-arch/medvision-ai
+#### Sohbet Geçmişi
+- `chat_sessions` + `chat_messages` tabloları (`supabase/migrations/002_chat_sessions.sql`)
+  > **⚠️ Supabase SQL Editor'de migrasyonu çalıştırın!**
+- `/api/assistant/route.ts` — her sohbette oturum oluşturur/günceller, mesajları kaydeder
+- `/chat` sayfası — `session_id` state ile oturumu takip eder
+- `/history` sayfası — "Analizler" ve "Asistan Sohbetleri" sekmeleri
+- `/api/chat-session/[id]` — sohbet oturumu silme endpoint'i
 
-### Kritik Notlar (Modal API Değişiklikleri)
-- `container_idle_timeout` → `scaledown_window`
-- `allow_concurrent_inputs=N` → `@modal.concurrent(max_inputs=N)` dekoratörü
-
-### Test Sonucu ✅
-- `/health` → `{"status":"ok","model":"medgemma-4b-it"}`
-- `/analyze` → token olmadan `401 Not authenticated` (JWT koruması çalışıyor)
-
----
-
-## 5. Faz 3 — Tamamlananlar (2026-06-06)
-
-### Oluşturulan Dosyalar
-- `components/image-dropzone.tsx` — Sürükle-bırak yükleme bileşeni (react-dropzone)
-- `lib/supabase/storage.ts` — Supabase Storage yükleme + imzalı URL
-- `app/api/analyze/route.ts` — Modal proxy (MODAL_API_URL sunucu tarafında kalır)
-- `app/(dashboard)/analyze/page.tsx` — Analiz sayfası (yükleme formu)
-- `app/(dashboard)/analysis/[id]/page.tsx` — Rapor sayfası (server component)
-- `app/(dashboard)/analysis/[id]/report-view.tsx` — TR/EN toggle + PDF (client component)
-- `app/(dashboard)/page.tsx` — Ana sayfa güncellendi (son analizler + CTA)
-
-### Analiz Akışı
-1. `/analyze` → Dropzone ile görüntü seç + klinisyen notu
-2. "Analiz Et" → Supabase Storage'a yükle → `/api/analyze` proxy → Modal GPU
-3. Sonuç DB'ye kayıt → `/analysis/{id}` rapor sayfasına yönlendir
-4. Rapor sayfası: görüntü + TR/EN toggle + PDF indirme
-
-### Kritik Notlar
-- `MODAL_API_URL` environment değişkeni **NEXT_PUBLIC_ öneki olmadan** kalır (server-side only)
-- PDF: jsPDF + `/public/fonts/Roboto-Regular.ttf` (TTF runtime fetch) — Türkçe karakter desteği
-- Görüntü storage path'i DB'de saklanır; rapor sayfasında imzalı URL oluşturulur (1 saat geçerli)
-- `pnpm-workspace.yaml`'a `core-js: true` eklendi (jsPDF bağımlılığı)
-- Supabase Storage RLS politikaları `storage.objects` tablosuna ayrıca eklendi (INSERT/SELECT/DELETE)
-
-### Backend Prompt Güncellemesi
-- Hekim odaklı sistematik bulgular (boyut, morfoloji, kenar, dansite/sinyal, komşu yapılar)
-- Önceliklendirilmiş ayırıcı tanı + aciliyet bayrağı
-- Spesifik öneriler: modalite, lab, uzmanlık sevk, takip zaman çizelgesi
-- `max_new_tokens` 600 → 1400
-
-### Test Sonucu ✅
-- `pnpm build` başarılı, TypeScript hatasız
-- Storage RLS düzeltildi, görüntü yükleme çalışıyor
-- PDF Türkçe karakterler düzgün (Roboto TTF)
-- Modal deploy başarılı, kapsamlı rapor üretimi onaylandı
-
-## 6. Faz 4 — Tamamlananlar (2026-06-06)
-
-### Oluşturulan / Güncellenen Dosyalar
-- `components/chat-panel.tsx` — Rapor altındaki sohbet paneli (mesaj geçmişi, yazıyor animasyonu, ataç ile dosya ekleme)
-- `app/api/chat/route.ts` — Modal `/chat` proxy; orijinal görüntü Storage'dan çekilip base64 olarak gönderilir, mesajlar DB'ye kaydedilir
-- `app/(dashboard)/history/page.tsx` + `history-list.tsx` — Geçmiş listesi, arama, silme, inline rename
-- `app/api/analysis/[id]/route.ts` — DELETE (Storage + DB) + PATCH (image_name güncelleme)
-- `components/multi-image-dropzone.tsx` — 5 görüntüye kadar çoklu yükleme
-- `report-view.tsx` — çoklu görüntü galerisi + navigasyon
-
-### Özellikler
-- MedGemma ile bağlamlı sohbet (görüntü ilk mesaja, ek dosya son mesaja eklenir)
-- Sohbete opsiyonel ek görüntü/PDF
-- Çoklu görüntü analizi (`image_url` = tek yol veya JSON array string, geriye uyumlu)
-- Geçmiş: arama, silme, yeniden adlandırma
+### Yapılacaklar
+- Stripe entegrasyonu
+- Plan bazlı kota (şu an sabit 3)
+- Kullanıcı panelinde kota göstergesi
+- Bkz. `PLAN.md` Faz 7 yapılacaklar tablosu
 
 ---
 
-## 7. Faz 5 — Tamamlananlar (2026-06-06)
+## 6. Veritabanı Yapısı (Güncel)
 
-### Deploy
-- **Vercel:** GitHub bağlı, otomatik deploy. **Root Directory = `web`** (monorepo, kritik)
-- **Modal:** `modal deploy backend/app.py` ile production'da
-- **Özel alan adı:** `yapayzekahekim.com` (Hostinger DNS → Vercel)
-  - A: `@` → `216.198.79.1`
-  - CNAME: `www` → `*.vercel-dns-017.com`
+| Tablo | Açıklama |
+|---|---|
+| `analyses` | Tıbbi görüntü analizleri |
+| `messages` | Rapor sohbet mesajları (analysis_id FK) |
+| `chat_sessions` | Bağımsız asistan sohbet oturumları ⚠️ migration gerekli |
+| `chat_messages` | Oturum mesajları ⚠️ migration gerekli |
 
-### Son Dokunuşlar
-- Rate limiting: 10 analiz/saat (kullanıcı JWT ile Supabase REST count sorgusu)
-- Favicon (`app/icon.svg`), Open Graph + viewport meta, `robots: noindex` (tıbbi)
-- 404 sayfaları (global + analiz), boş durum ekranları, Türkçe hata mesajları
-- PDF: jsPDF → **pdfmake** (gömülü Roboto, tam Türkçe/Unicode)
+---
 
-### Deploy Sonrası Düzeltmeler (canlı testler)
-- Sohbette görüntü opsiyonel (multi-image JSON parse + boş string fallback; backend `image_base64` opsiyonel)
-- Chat input + arama yazı renkleri (`text-slate-800`), chat paneli kart stili
-- **Cold-start:** `maxDuration=60` (Vercel Hobby max) + `/api/warmup` ön ısıtma
+## 7. API Route'ları (Güncel)
 
-### Kritik Notlar
-- Vercel Hobby planı: fonksiyon timeout max **60s** — uzun cold-start'larda analiz nadiren sınıra yaklaşabilir
-- `MODAL_API_URL` server-side only (NEXT_PUBLIC_ öneki yok)
+| Route | Yöntem | Açıklama |
+|---|---|---|
+| `/api/analyze` | POST | Görüntü/PDF analizi (kota kontrolü ile) |
+| `/api/chat` | POST | Rapor bağlamlı sohbet |
+| `/api/assistant` | POST | Serbest asistan sohbeti (session_id ile) |
+| `/api/extract-pdf` | POST | PDF metin çıkartma |
+| `/api/analysis/[id]` | GET/PATCH/DELETE | Analiz yönetimi |
+| `/api/chat-session/[id]` | DELETE | Sohbet oturumu silme |
+| `/api/warmup` | GET | Modal container ön ısıtma |
 
 ---
 
@@ -198,4 +166,5 @@ medgemma-app/
 - `.env.local` git'e girmez — `MODAL_API_URL` de buraya eklendi
 - Modal cold start: container 5 dk boştan sonra kapanır; `/api/warmup` ile sayfa açılınca önceden uyandırılıyor
 - Supabase ücretsiz tier: 500MB DB, 1GB Storage (başlangıç için yeterli)
-- Rate limiting aktif: 10 analiz/saat
+- **⚠️ Chat geçmişi için:** Supabase SQL Editor'de `supabase/migrations/002_chat_sessions.sql` çalıştırılmalı
+- **⚠️ Vercel'de Root Directory = `web`** (monorepo)

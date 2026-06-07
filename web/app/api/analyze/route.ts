@@ -13,6 +13,19 @@ export async function POST(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return NextResponse.json({ error: 'Oturum bulunamadı.' }, { status: 401 })
 
+  // Kullanıcı kota kontrolü — ücretsiz tier: max 3 analiz
+  const { count } = await supabase
+    .from('analyses')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+
+  if ((count ?? 0) >= 3) {
+    return NextResponse.json(
+      { error: 'Ücretsiz 3 analiz hakkınız doldu. Abonelik sistemi yakında eklenecek.' },
+      { status: 403 }
+    )
+  }
+
   const { images_b64, doctor_note } = await request.json()
 
   const images = Array.isArray(images_b64) ? images_b64 : []

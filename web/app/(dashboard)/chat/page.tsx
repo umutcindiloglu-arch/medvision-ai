@@ -30,6 +30,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false)
   const [attachment, setAttachment] = useState<{ file: File; preview: string; isPdf: boolean } | null>(null)
   const [pdfText, setPdfText] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -131,12 +132,13 @@ export default function ChatPage() {
       const res = await fetch('/api/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history, attachment_b64: attachmentB64 }),
+        body: JSON.stringify({ messages: history, attachment_b64: attachmentB64, session_id: sessionId }),
       })
 
       if (!res.ok) throw new Error(await readError(res, T.common.error))
 
-      const { reply } = await readJson<{ reply: string }>(res)
+      const { reply, session_id: newSessionId } = await readJson<{ reply: string; session_id: string | null }>(res)
+      if (newSessionId && !sessionId) setSessionId(newSessionId)
       setMessages((prev) => [...prev, { role: 'assistant', content: reply }])
     } catch (err) {
       toast.error(err instanceof Error ? err.message : T.common.error)

@@ -33,7 +33,7 @@ const t = {
       badge: 'Google MedGemma destekli',
       hero_title_1: 'Tıbbi görüntüde',
       hero_title_2: 'akıllı analiz',
-      hero_title_3: ', saniyeler içinde.',
+      hero_title_3: 'saniyeler içinde.',
       hero_desc: 'X-ray, MRI ve CT görüntülerinizi yapay zekaya yükleyin. Türkçe ve İngilizce detaylı rapor alın. Doktorlar için tasarlandı.',
       cta_start: 'Ücretsiz Başla',
       cta_login: 'Giriş Yap',
@@ -191,6 +191,7 @@ const t = {
       saving: 'Rapor kaydediliyor...',
       err_no_content: 'Görüntü, PDF veya not ekleyin.',
       err_session: 'Oturum süresi dolmuş.',
+      err_quota: 'Ücretsiz 3 analiz hakkınız doldu. Abonelik sistemi yakında eklenecek.',
       success: 'Analiz tamamlandı!',
     },
 
@@ -269,7 +270,7 @@ const t = {
       badge: 'Powered by Google MedGemma',
       hero_title_1: 'Intelligent analysis',
       hero_title_2: 'of medical images',
-      hero_title_3: ', in seconds.',
+      hero_title_3: 'in seconds.',
       hero_desc: 'Upload your X-ray, MRI and CT scans to AI. Get detailed reports in Turkish and English. Designed for doctors.',
       cta_start: 'Start for Free',
       cta_login: 'Sign In',
@@ -417,6 +418,7 @@ const t = {
       saving: 'Saving report...',
       err_no_content: 'Add an image, PDF, or note.',
       err_session: 'Session expired.',
+      err_quota: 'You have used all 3 free analyses. Subscription system coming soon.',
       success: 'Analysis complete!',
     },
 

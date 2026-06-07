@@ -50,13 +50,13 @@ function LoginForm() {
           <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">{A.email}</label>
           <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
             placeholder={A.email_placeholder}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
         </div>
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">{A.password}</label>
           <input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
         </div>
 
         {error && (
