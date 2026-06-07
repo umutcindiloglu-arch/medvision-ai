@@ -17,6 +17,9 @@ importers:
       '@types/html2canvas':
         specifier: ^1.0.0
         version: 1.0.0
+      dicom-parser:
+        specifier: ^1.8.21
+        version: 1.8.21
       html2canvas:
         specifier: ^1.4.1
         version: 1.4.1
@@ -1059,6 +1062,9 @@ packages:
 
   dfa@1.2.0:
     resolution: {integrity: sha512-ED3jP8saaweFTjeGX8HQPjeC1YYyZs98jGNZx6IiBvxW7JG5v492kamAQB3m2wop07CvU/RQmzcKr6bgcC5D/Q==}
+
+  dicom-parser@1.8.21:
+    resolution: {integrity: sha512-lYCweHQDsC8UFpXErPlg86Px2A8bay0HiUY+wzoG3xv5GzgqVHU3lziwSc/Gzn7VV7y2KeP072SzCviuOoU02w==}
 
   doctrine@2.1.0:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
@@ -3150,6 +3156,8 @@ snapshots:
   detect-libc@2.1.2: {}
 
   dfa@1.2.0: {}
+
+  dicom-parser@1.8.21: {}
 
   doctrine@2.1.0:
     dependencies:

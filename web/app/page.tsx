@@ -199,7 +199,7 @@ export default async function LandingPage() {
           <h2 className="text-2xl font-extrabold text-slate-900 mb-10">3 adımda tıbbi görüntü analizi</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {([
-              { n: '1', icon: '🩻', title: 'Görüntü Yükle',   desc: 'X-ray, MRI veya CT görüntülerinizi sürükleyip bırakın. JPEG ve PNG formatları desteklenir.' },
+              { n: '1', icon: '🩻', title: 'Görüntü Yükle',   desc: 'X-ray, MRI veya CT görüntülerinizi sürükleyip bırakın. JPEG, PNG ve DICOM (.dcm) desteklenir.' },
               { n: '2', icon: '🤖', title: 'AI Analiz Eder',  desc: 'MedGemma modeli görüntüyü saniyeler içinde tarar, anomalileri ve bulguları tespit eder.' },
               { n: '3', icon: '📋', title: 'Raporu Al',       desc: 'Türkçe ve İngilizce detaylı rapor anında hazırlanır. Geçmiş analizlerinize her zaman erişin.' },
             ] as const).map(({ n, icon, title, desc }, i) => (

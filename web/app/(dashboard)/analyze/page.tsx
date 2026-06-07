@@ -131,7 +131,7 @@ export default function AnalyzePage() {
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-slate-800">Yeni Analiz</h1>
         <p className="text-slate-500 mt-1 text-sm">
-          Tıbbi görüntülerinizi yükleyin, MedGemma yapay zekası analiz etsin. En fazla 5 görüntü ekleyebilirsiniz.
+          Tıbbi görüntülerinizi yükleyin, MedGemma yapay zekası analiz etsin. JPEG, PNG ve DICOM (.dcm) desteklenir. En fazla 5 görüntü ekleyebilirsiniz.
         </p>
       </div>
 

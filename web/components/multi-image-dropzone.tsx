@@ -1,14 +1,17 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useDropzone, FileRejection } from 'react-dropzone'
+import { isDicom, dicomToImageFile } from '@/lib/dicom'
 
 const MAX_FILES = 5
-const MAX_SIZE = 20 * 1024 * 1024
+const MAX_SIZE = 200 * 1024 * 1024 // DICOM dosyaları büyük olabilir
 const ACCEPTED_TYPES = {
   'image/jpeg': ['.jpg', '.jpeg'],
   'image/png': ['.png'],
   'image/webp': ['.webp'],
+  'application/dicom': ['.dcm'],
+  'application/octet-stream': ['.dcm'],
 }
 
 interface MultiImageDropzoneProps {
@@ -23,11 +26,25 @@ export function MultiImageDropzone({
   files, previews, onAdd, onRemove, disabled,
 }: MultiImageDropzoneProps) {
   const remaining = MAX_FILES - files.length
+  const [converting, setConverting] = useState(false)
 
   const onDrop = useCallback(
-    (accepted: File[], rejected: FileRejection[]) => {
+    async (accepted: File[], rejected: FileRejection[]) => {
       if (rejected.length > 0) return
-      onAdd(accepted.slice(0, remaining))
+      const batch = accepted.slice(0, remaining)
+
+      const hasDicom = batch.some(isDicom)
+      if (hasDicom) setConverting(true)
+      try {
+        const converted = await Promise.all(
+          batch.map((f) => (isDicom(f) ? dicomToImageFile(f) : Promise.resolve(f)))
+        )
+        onAdd(converted)
+      } catch {
+        // Dönüşüm hatası — kullanıcı zaten UI'dan görecek
+      } finally {
+        setConverting(false)
+      }
     },
     [onAdd, remaining]
   )
@@ -38,11 +55,17 @@ export function MultiImageDropzone({
     maxSize: MAX_SIZE,
     multiple: true,
     maxFiles: remaining,
-    disabled: disabled || remaining === 0,
+    disabled: disabled || converting || remaining === 0,
   })
 
   return (
     <div className="space-y-3">
+      {converting && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+          <p className="text-xs text-blue-700">DICOM dosyası PNG'ye dönüştürülüyor...</p>
+        </div>
+      )}
       {/* Önizleme grid */}
       {files.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
@@ -109,7 +132,7 @@ export function MultiImageDropzone({
               <p className="text-sm font-medium text-slate-700">
                 {isDragActive ? 'Görüntüleri bırakın' : 'Görüntüleri sürükleyin veya tıklayın'}
               </p>
-              <p className="text-xs text-slate-400 mt-1">JPG, PNG, WebP — Maks. 20MB — En fazla {MAX_FILES} görüntü</p>
+              <p className="text-xs text-slate-400 mt-1">JPG, PNG, WebP, DICOM (.dcm) — En fazla {MAX_FILES} görüntü</p>
             </div>
           </div>
         </div>
