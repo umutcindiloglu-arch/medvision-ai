@@ -79,14 +79,19 @@ Giriş yapmamış kullanıcılara uygulamayı tanıtan, güven oluşturan ve kay
 
 ## Routing Değişikliği
 
+Next.js App Router'da `(dashboard)` route group URL'e segment eklemez. Bu nedenle `app/(dashboard)/page.tsx` ile `app/page.tsx` ikisi de `/`'ye map olur — çakışır. Çözüm: dashboard anasayfasını `/dashboard` rotasına taşımak.
+
 | Rota | Mevcut | Yeni |
 |------|--------|------|
-| `/` | `(dashboard)/page.tsx` → giriş yoksa `/login`'e redirect | `app/page.tsx` → herkese açık landing |
-| `/login` | `(auth)/login/page.tsx` | Değişmez |
+| `/` | `(dashboard)/page.tsx` → giriş yoksa `/login`'e redirect | `app/page.tsx` → herkese açık landing (session varsa `/dashboard`'a redirect) |
+| `/dashboard` | Yok | `(dashboard)/dashboard/page.tsx` → eski `(dashboard)/page.tsx` buraya taşınır |
+| `/login` | `(auth)/login/page.tsx` | Değişmez; başarılı girişte `/dashboard`'a yönlendirir |
 | `/register` | `(auth)/register/page.tsx` | Değişmez |
-| `/` (giriş yapılmış) | Dashboard | Dashboard (değişmez, middleware ile) |
+| `/analyze`, `/history`, vb. | Değişmez | Değişmez |
 
-**Giriş yapılmış kullanıcı `/`'ya gelirse:** Landing'de navbar'dan kontrol edilerek dashboard'a yönlendirilir, ya da middleware ile otomatik.
+**Giriş yapılmış kullanıcı `/`'ya gelirse:** `app/page.tsx` içinde session kontrolü yapılır, oturum varsa `redirect('/dashboard')`.
+
+**Navbar "Anasayfa" sekmesi:** Dashboard layout navbar'ına `/` linkli "Anasayfa" menü öğesi eklenir. Giriş yapmış kullanıcılar landing'i bu şekilde görebilir.
 
 ---
 
@@ -94,14 +99,16 @@ Giriş yapmamış kullanıcılara uygulamayı tanıtan, güven oluşturan ve kay
 
 | Dosya | Açıklama |
 |-------|----------|
-| `web/app/page.tsx` | Herkese açık landing page (server component, `'use client'` yok) |
+| `web/app/page.tsx` | Herkese açık landing page (server component) |
+| `web/app/(dashboard)/dashboard/page.tsx` | Eski `(dashboard)/page.tsx` buraya taşınır |
 
 ## Değiştirilen Dosyalar
 
 | Dosya | Değişiklik |
 |-------|-----------|
-| `web/app/(dashboard)/page.tsx` | Başındaki `if (!user) redirect('/login')` kaldırılır — artık landing yönlendiriyor |
-| `web/components/navbar.tsx` | Giriş yapılmış/yapılmamış navbar durumu ayrılabilir (opsiyonel refactor) |
+| `web/app/(dashboard)/page.tsx` | **Silinir** — içeriği `dashboard/page.tsx`'e taşınır |
+| `web/app/(auth)/login/page.tsx` | `router.push('/')` → `router.push('/dashboard')` |
+| `web/components/navbar.tsx` | "Anasayfa" (`/`) menü sekmesi eklenir |
 
 ---
 
