@@ -199,7 +199,7 @@ export default async function LandingPage() {
           <h2 className="text-2xl font-extrabold text-slate-900 mb-10">3 adımda tıbbi görüntü analizi</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {([
-              { n: '1', icon: '🩻', title: 'Görüntü Yükle',   desc: 'X-ray, MRI veya CT görüntülerinizi sürükleyip bırakın. JPEG, PNG, DICOM desteklenir.' },
+              { n: '1', icon: '🩻', title: 'Görüntü Yükle',   desc: 'X-ray, MRI veya CT görüntülerinizi sürükleyip bırakın. JPEG ve PNG formatları desteklenir.' },
               { n: '2', icon: '🤖', title: 'AI Analiz Eder',  desc: 'MedGemma modeli görüntüyü saniyeler içinde tarar, anomalileri ve bulguları tespit eder.' },
               { n: '3', icon: '📋', title: 'Raporu Al',       desc: 'Türkçe ve İngilizce detaylı rapor anında hazırlanır. Geçmiş analizlerinize her zaman erişin.' },
             ] as const).map(({ n, icon, title, desc }, i) => (
@@ -231,7 +231,7 @@ export default async function LandingPage() {
               { icon: '💬', title: 'Sohbet ile Sorgula',       desc: 'Rapor hakkında sorularınızı yapay zekaya sorun. "Bu bulgu ne anlama geliyor?" gibi.' },
               { icon: '🗂️', title: 'Analiz Geçmişi',          desc: 'Tüm analizleriniz güvenli şekilde saklanır. Geçmiş raporlarınıza istediğiniz zaman ulaşın.' },
               { icon: '🔒', title: 'Güvenli Altyapı',          desc: 'Supabase + RLS ile verileriniz yalnızca size görünür. HTTPS şifrelemesi zorunludur.' },
-              { icon: '📎', title: 'Çoklu Görüntü',            desc: 'Tek seferde birden fazla görüntü yükleyin ve karşılaştırmalı analiz yapın.' },
+              { icon: '📎', title: 'Çoklu Görüntü',            desc: 'Tek analiz oturumunda birden fazla görüntü yükleyerek kapsamlı değerlendirme yapın.' },
             ] as const).map(({ icon, title, desc }) => (
               <div key={title} className="bg-white border border-slate-200 rounded-2xl p-5">
                 <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-xl mb-3">{icon}</div>
