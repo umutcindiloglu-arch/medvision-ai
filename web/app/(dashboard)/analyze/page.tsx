@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { MultiImageDropzone } from '@/components/multi-image-dropzone'
 import { uploadMedicalImage } from '@/lib/supabase/storage'
 import { createClient } from '@/lib/supabase/client'
-import { readJson, readError } from '@/lib/api'
+import { readJson, readError, fetchWithWarmupRetry } from '@/lib/api'
 import { useTranslation } from '@/lib/i18n/context'
 
 type Step = 'idle' | 'uploading' | 'extracting' | 'analyzing' | 'saving'
@@ -36,6 +36,7 @@ export default function AnalyzePage() {
   const [step, setStep] = useState<Step>('idle')
   const [pdfLoading, setPdfLoading] = useState(false)
   const [warming, setWarming] = useState(true)
+  const [retryMsg, setRetryMsg] = useState<string | null>(null)
   const pdfInputRef = useRef<HTMLInputElement>(null)
 
   const isLoading = step !== 'idle'
@@ -127,15 +128,20 @@ export default function AnalyzePage() {
       setStep('analyzing')
       const imagesB64 = await Promise.all(files.map(toBase64))
 
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          images_b64: imagesB64,
-          doctor_note: combinedNote || undefined,
-        }),
-      })
+      const res = await fetchWithWarmupRetry(
+        '/api/analyze',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            images_b64: imagesB64,
+            doctor_note: combinedNote || undefined,
+          }),
+        },
+        (s) => setRetryMsg(s === null ? null : `Model ısınıyor, ${s}s içinde otomatik tekrar deniyor...`),
+      )
 
+      setRetryMsg(null)
       if (!res.ok) throw new Error(await readError(res, T.common.error))
 
       const { report_en, report_tr } = await readJson<{ report_en: string; report_tr: string }>(res)
@@ -167,6 +173,7 @@ export default function AnalyzePage() {
       router.push(`/analysis/${analysis.id}`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : T.common.error)
+      setRetryMsg(null)
       setStep('idle')
     }
   }
@@ -296,9 +303,11 @@ export default function AnalyzePage() {
         </div>
 
         {isLoading && (
-          <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-            <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
-            <p className="text-sm text-blue-700 font-medium">{stepLabel[step]}</p>
+          <div className={`flex items-center gap-3 p-4 rounded-xl border ${retryMsg ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200'}`}>
+            <div className={`w-5 h-5 border-2 border-t-transparent rounded-full animate-spin flex-shrink-0 ${retryMsg ? 'border-amber-400' : 'border-blue-400'}`} />
+            <p className={`text-sm font-medium ${retryMsg ? 'text-amber-700' : 'text-blue-700'}`}>
+              {retryMsg ?? stepLabel[step]}
+            </p>
           </div>
         )}
 

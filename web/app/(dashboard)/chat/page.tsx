@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { readJson, readError } from '@/lib/api'
+import { readJson, readError, fetchWithWarmupRetry } from '@/lib/api'
 import { isDicom, dicomToImageFile } from '@/lib/dicom'
 import { useTranslation } from '@/lib/i18n/context'
 
@@ -32,6 +32,7 @@ export default function ChatPage() {
   const [pdfText, setPdfText] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [warming, setWarming] = useState(true)
+  const [retryMsg, setRetryMsg] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -130,12 +131,17 @@ export default function ChatPage() {
         content: m.role === 'user' && m === userMsg ? messageText : m.content,
       }))
 
-      const res = await fetch('/api/assistant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history, attachment_b64: attachmentB64, session_id: sessionId }),
-      })
+      const res = await fetchWithWarmupRetry(
+        '/api/assistant',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: history, attachment_b64: attachmentB64, session_id: sessionId }),
+        },
+        (s) => setRetryMsg(s === null ? null : `Model ısınıyor, ${s}s içinde otomatik tekrar deniyor...`),
+      )
 
+      setRetryMsg(null)
       if (!res.ok) throw new Error(await readError(res, T.common.error))
 
       const { reply, session_id: newSessionId } = await readJson<{ reply: string; session_id: string | null }>(res)
@@ -143,6 +149,7 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, { role: 'assistant', content: reply }])
     } catch (err) {
       toast.error(err instanceof Error ? err.message : T.common.error)
+      setRetryMsg(null)
       setMessages((prev) => prev.filter((m) => m !== userMsg))
     } finally {
       setLoading(false)
@@ -221,12 +228,16 @@ export default function ChatPage() {
                   d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
             </div>
-            <div className="bg-slate-100 rounded-2xl rounded-bl-sm px-4 py-2.5">
-              <div className="flex gap-1 items-center h-4">
-                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0ms]" />
-                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:150ms]" />
-                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:300ms]" />
-              </div>
+            <div className={`rounded-2xl rounded-bl-sm px-4 py-2.5 ${retryMsg ? 'bg-amber-50 border border-amber-200' : 'bg-slate-100'}`}>
+              {retryMsg ? (
+                <p className="text-xs text-amber-700">{retryMsg}</p>
+              ) : (
+                <div className="flex gap-1 items-center h-4">
+                  <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0ms]" />
+                  <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:150ms]" />
+                  <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:300ms]" />
+                </div>
+              )}
             </div>
           </div>
         )}
